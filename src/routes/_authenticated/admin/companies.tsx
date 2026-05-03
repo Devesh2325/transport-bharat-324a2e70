@@ -33,8 +33,8 @@ function CompaniesAdmin() {
   };
   useEffect(() => { load(); }, []);
 
-  const update = async (id: string, patch: Partial<Company>) => {
-    const { error } = await supabase.from("companies").update(patch).eq("id", id);
+  const update = async (id: string, patch: Record<string, unknown>) => {
+    const { error } = await supabase.from("companies").update(patch as never).eq("id", id);
     if (error) toast.error(error.message); else { toast.success("Updated"); load(); }
   };
 
