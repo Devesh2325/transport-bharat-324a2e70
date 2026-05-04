@@ -61,9 +61,11 @@ function OrdersPage() {
   };
 
   const setStatus = async (id: string, status: string) => {
-    const patch: Record<string, unknown> = { status };
-    if (status === "loaded") patch.pickup_at = new Date().toISOString();
-    if (status === "delivered") patch.delivered_at = new Date().toISOString();
+    const patch = {
+      status: status as never,
+      ...(status === "loaded" ? { pickup_at: new Date().toISOString() } : {}),
+      ...(status === "delivered" ? { delivered_at: new Date().toISOString() } : {}),
+    };
     const { error } = await supabase.from("orders").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
     load();
