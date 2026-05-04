@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_accounts: {
+        Row: {
+          account_no: string | null
+          balance: number
+          bank: string | null
+          company_id: string
+          created_at: string
+          id: string
+          ifsc: string | null
+          name: string
+        }
+        Insert: {
+          account_no?: string | null
+          balance?: number
+          bank?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          ifsc?: string | null
+          name: string
+        }
+        Update: {
+          account_no?: string | null
+          balance?: number
+          bank?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          ifsc?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           brand_accent: string | null
@@ -110,6 +151,373 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doc_counters: {
+        Row: {
+          company_id: string
+          kind: string
+          value: number
+        }
+        Insert: {
+          company_id: string
+          kind: string
+          value?: number
+        }
+        Update: {
+          company_id?: string
+          kind?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doc_counters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiries: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          expected_rate: number | null
+          from_city: string | null
+          id: string
+          inquiry_no: string
+          material: string | null
+          notes: string | null
+          party_id: string | null
+          status: Database["public"]["Enums"]["inquiry_status"]
+          to_city: string | null
+          updated_at: string
+          vehicle_type: string | null
+          weight_tons: number | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          expected_rate?: number | null
+          from_city?: string | null
+          id?: string
+          inquiry_no: string
+          material?: string | null
+          notes?: string | null
+          party_id?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          to_city?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+          weight_tons?: number | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          expected_rate?: number | null
+          from_city?: string | null
+          id?: string
+          inquiry_no?: string
+          material?: string | null
+          notes?: string | null
+          party_id?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          to_city?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+          weight_tons?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiry_quotes: {
+        Row: {
+          company_id: string
+          counter_rate: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          inquiry_id: string
+          note: string | null
+          quoted_rate: number | null
+        }
+        Insert: {
+          company_id: string
+          counter_rate?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inquiry_id: string
+          note?: string | null
+          quoted_rate?: number | null
+        }
+        Update: {
+          company_id?: string
+          counter_rate?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          inquiry_id?: string
+          note?: string | null
+          quoted_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiry_quotes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiry_quotes_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          advance_amount: number
+          bilty_no: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          delivered_at: string | null
+          driver_name: string | null
+          driver_phone: string | null
+          freight_amount: number
+          from_city: string | null
+          id: string
+          inquiry_id: string | null
+          material: string | null
+          notes: string | null
+          order_no: string
+          party_id: string | null
+          pickup_at: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          to_city: string | null
+          updated_at: string
+          vehicle_id: string | null
+          weight_tons: number | null
+        }
+        Insert: {
+          advance_amount?: number
+          bilty_no?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          delivered_at?: string | null
+          driver_name?: string | null
+          driver_phone?: string | null
+          freight_amount?: number
+          from_city?: string | null
+          id?: string
+          inquiry_id?: string | null
+          material?: string | null
+          notes?: string | null
+          order_no: string
+          party_id?: string | null
+          pickup_at?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          to_city?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+          weight_tons?: number | null
+        }
+        Update: {
+          advance_amount?: number
+          bilty_no?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          delivered_at?: string | null
+          driver_name?: string | null
+          driver_phone?: string | null
+          freight_amount?: number
+          from_city?: string | null
+          id?: string
+          inquiry_id?: string | null
+          material?: string | null
+          notes?: string | null
+          order_no?: string
+          party_id?: string | null
+          pickup_at?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          to_city?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+          weight_tons?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parties: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_id: string
+          created_at: string
+          email: string | null
+          gst: string | null
+          id: string
+          name: string
+          phone: string | null
+          state: string | null
+          type: Database["public"]["Enums"]["party_type"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_id: string
+          created_at?: string
+          email?: string | null
+          gst?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          state?: string | null
+          type?: Database["public"]["Enums"]["party_type"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_id?: string
+          created_at?: string
+          email?: string | null
+          gst?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          state?: string | null
+          type?: Database["public"]["Enums"]["party_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parties_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          created_by: string | null
+          direction: Database["public"]["Enums"]["payment_direction"]
+          id: string
+          mode: Database["public"]["Enums"]["payment_mode"]
+          notes: string | null
+          order_id: string | null
+          paid_at: string
+          party_id: string | null
+          reference: string | null
+        }
+        Insert: {
+          amount: number
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          direction: Database["public"]["Enums"]["payment_direction"]
+          id?: string
+          mode?: Database["public"]["Enums"]["payment_mode"]
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string
+          party_id?: string | null
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          direction?: Database["public"]["Enums"]["payment_direction"]
+          id?: string
+          mode?: Database["public"]["Enums"]["payment_mode"]
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string
+          party_id?: string | null
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
             referencedColumns: ["id"]
           },
         ]
@@ -223,6 +631,47 @@ export type Database = {
           },
         ]
       }
+      vehicles: {
+        Row: {
+          capacity_tons: number | null
+          company_id: string
+          created_at: string
+          id: string
+          number: string
+          owner_name: string | null
+          owner_phone: string | null
+          type: string | null
+        }
+        Insert: {
+          capacity_tons?: number | null
+          company_id: string
+          created_at?: string
+          id?: string
+          number: string
+          owner_name?: string | null
+          owner_phone?: string | null
+          type?: string | null
+        }
+        Update: {
+          capacity_tons?: number | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          number?: string
+          owner_name?: string | null
+          owner_phone?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -237,6 +686,29 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      next_doc_no: {
+        Args: { _company_id: string; _kind: string; _prefix: string }
+        Returns: string
+      }
+      report_party_outstanding: {
+        Args: { _company_id: string }
+        Returns: {
+          billed: number
+          outstanding: number
+          party_id: string
+          party_name: string
+          received: number
+        }[]
+      }
+      report_revenue_by_month: {
+        Args: { _company_id: string }
+        Returns: {
+          month: string
+          paid: number
+          received: number
+          revenue: number
+        }[]
+      }
       user_in_company: {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
@@ -249,7 +721,17 @@ export type Database = {
         | "agent"
         | "finance"
         | "transporter"
+      inquiry_status: "new" | "quoted" | "negotiating" | "won" | "lost"
       invite_status: "pending" | "accepted" | "revoked" | "expired"
+      order_status:
+        | "created"
+        | "loaded"
+        | "in_transit"
+        | "delivered"
+        | "cancelled"
+      party_type: "client" | "consignor" | "consignee" | "transporter"
+      payment_direction: "receivable" | "payable"
+      payment_mode: "cash" | "upi" | "bank" | "cheque"
       subscription_status: "trial" | "active" | "expired" | "suspended"
     }
     CompositeTypes: {
@@ -385,7 +867,18 @@ export const Constants = {
         "finance",
         "transporter",
       ],
+      inquiry_status: ["new", "quoted", "negotiating", "won", "lost"],
       invite_status: ["pending", "accepted", "revoked", "expired"],
+      order_status: [
+        "created",
+        "loaded",
+        "in_transit",
+        "delivered",
+        "cancelled",
+      ],
+      party_type: ["client", "consignor", "consignee", "transporter"],
+      payment_direction: ["receivable", "payable"],
+      payment_mode: ["cash", "upi", "bank", "cheque"],
       subscription_status: ["trial", "active", "expired", "suspended"],
     },
   },
