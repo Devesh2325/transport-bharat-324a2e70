@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -11,48 +11,121 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PartyCombobox } from "@/components/PartyCombobox";
 import { VehicleCombobox } from "@/components/VehicleCombobox";
+import { ProductCombobox, type ProductLite } from "@/components/ProductCombobox";
+import { StateSelect } from "@/components/StateSelect";
 import { StatusBadge } from "@/components/StatusBadge";
 import { fmtINR, fmtDate, nextDocNo } from "@/lib/queries";
+import { calcGst } from "@/lib/states";
 import { Plus, ArrowRight, FileText, Truck, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/orders")({ component: OrdersPage });
+interface OrderSearch { fromInquiry?: string }
+
+export const Route = createFileRoute("/_authenticated/orders")({
+  component: OrdersPage,
+  validateSearch: (s: Record<string, unknown>): OrderSearch => ({ fromInquiry: typeof s.fromInquiry === "string" ? s.fromInquiry : undefined }),
+});
 
 interface Row {
   id: string; order_no: string; from_city: string | null; to_city: string | null;
-  freight_amount: number; advance_amount: number; status: string; bilty_no: string | null;
+  freight_amount: number; advance_amount: number; total_amount: number | null; status: string; bilty_no: string | null;
   pickup_at: string | null; delivered_at: string | null; created_at: string;
+  cgst_amount: number | null; sgst_amount: number | null; igst_amount: number | null;
   parties: { name: string } | null; vehicles: { number: string } | null;
 }
 
-const empty = { party_id: null as string | null, vehicle_id: null as string | null, from_city: "", to_city: "", material: "", weight_tons: "", freight_amount: "", advance_amount: "", driver_name: "", driver_phone: "" };
+const empty = {
+  party_id: null as string | null, vehicle_id: null as string | null, product_id: null as string | null,
+  party_gst_id: null as string | null,
+  from_city: "", to_city: "", consignor_state: "", consignee_state: "",
+  material: "", weight_tons: "", freight_amount: "", advance_amount: "",
+  driver_name: "", driver_phone: "", gst_rate: "5",
+};
 
 function OrdersPage() {
   const { company, user } = useAuth();
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/_authenticated/orders" });
   const [rows, setRows] = useState<Row[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [filter, setFilter] = useState("all");
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [partyGsts, setPartyGsts] = useState<{ id: string; gstin: string; state: string; is_default: boolean }[]>([]);
 
   const load = async () => {
     if (!company) return;
     const { data } = await supabase.from("orders")
-      .select("id,order_no,from_city,to_city,freight_amount,advance_amount,status,bilty_no,pickup_at,delivered_at,created_at,parties(name),vehicles(number)")
+      .select("id,order_no,from_city,to_city,freight_amount,advance_amount,total_amount,status,bilty_no,pickup_at,delivered_at,created_at,cgst_amount,sgst_amount,igst_amount,parties(name),vehicles(number)")
       .eq("company_id", company.id).order("created_at", { ascending: false });
     setRows((data ?? []) as never as Row[]);
   };
   useEffect(() => { load(); }, [company?.id]);
 
+  // Auto-prefill from inquiry
+  useEffect(() => {
+    (async () => {
+      if (!search.fromInquiry || !company) return;
+      const { data: inq } = await supabase.from("inquiries").select("party_id,from_city,to_city,material,weight_tons,expected_rate,product_id").eq("id", search.fromInquiry).maybeSingle();
+      if (!inq) return;
+      let gstRate = "5";
+      if (inq.product_id) {
+        const { data: pr } = await supabase.from("products").select("gst_rate").eq("id", inq.product_id).maybeSingle();
+        if (pr?.gst_rate != null) gstRate = String(pr.gst_rate);
+      }
+      setForm(f => ({
+        ...f,
+        party_id: inq.party_id, product_id: inq.product_id ?? null,
+        from_city: inq.from_city ?? "", to_city: inq.to_city ?? "",
+        material: inq.material ?? "", weight_tons: inq.weight_tons ? String(inq.weight_tons) : "",
+        freight_amount: inq.expected_rate ? String(inq.expected_rate) : "",
+        gst_rate: gstRate,
+      }));
+      setOpen(true);
+      navigate({ to: "/orders", search: {}, replace: true });
+    })();
+  }, [search.fromInquiry, company?.id]);
+
+  // Load GSTs of selected party + auto-pick by consignee state
+  useEffect(() => {
+    (async () => {
+      if (!form.party_id) { setPartyGsts([]); return; }
+      const { data } = await supabase.from("party_gst_registrations").select("id,gstin,state,is_default").eq("party_id", form.party_id);
+      const gsts = data ?? [];
+      setPartyGsts(gsts);
+      if (form.consignee_state) {
+        const { data: picked } = await supabase.rpc("pick_party_gst", { _party_id: form.party_id, _state: form.consignee_state });
+        if (picked) setForm(f => ({ ...f, party_gst_id: picked as string }));
+      } else {
+        const def = gsts.find(g => g.is_default) ?? gsts[0];
+        if (def) setForm(f => ({ ...f, party_gst_id: def.id }));
+      }
+    })();
+  }, [form.party_id, form.consignee_state]);
+
+  const onProductPick = (p: ProductLite) => {
+    setForm(f => ({
+      ...f,
+      gst_rate: p.gst_rate != null ? String(p.gst_rate) : f.gst_rate,
+      freight_amount: f.freight_amount || (p.default_rate ? String(p.default_rate) : ""),
+      material: p.name,
+    }));
+  };
+
   const submit = async () => {
     if (!company || !user) return;
     const order_no = await nextDocNo(company.id, "ORD");
+    const base = Number(form.freight_amount || 0);
+    const split = calcGst(base, Number(form.gst_rate || 0), form.consignor_state, form.consignee_state);
     const { error } = await supabase.from("orders").insert({
       company_id: company.id, order_no,
-      party_id: form.party_id, vehicle_id: form.vehicle_id,
+      party_id: form.party_id, vehicle_id: form.vehicle_id, product_id: form.product_id,
+      party_gst_id: form.party_gst_id, gst_rate: Number(form.gst_rate || 0),
+      consignor_state: form.consignor_state || null, consignee_state: form.consignee_state || null,
+      cgst_amount: split.cgst, sgst_amount: split.sgst, igst_amount: split.igst, total_amount: split.total,
       from_city: form.from_city, to_city: form.to_city, material: form.material,
       weight_tons: form.weight_tons ? Number(form.weight_tons) : null,
-      freight_amount: Number(form.freight_amount || 0), advance_amount: Number(form.advance_amount || 0),
+      freight_amount: base, advance_amount: Number(form.advance_amount || 0),
       driver_name: form.driver_name, driver_phone: form.driver_phone, created_by: user.id,
     });
     if (error) return toast.error(error.message);
@@ -83,31 +156,55 @@ function OrdersPage() {
   };
 
   const filtered = rows.filter(r => filter === "all" || r.status === filter);
+  const base = Number(form.freight_amount || 0);
+  const preview = calcGst(base, Number(form.gst_rate || 0), form.consignor_state, form.consignee_state);
 
   return (
     <div>
-      <PageHeader title="Orders" subtitle="Active dispatches, vehicles and bilty (LR)."
+      <PageHeader title="Orders" subtitle="Active dispatches, vehicles, GST and bilty (LR)."
         actions={
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild><Button><Plus className="size-4 mr-1" /> New Order</Button></SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+            <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
               <SheetHeader><SheetTitle>New Order</SheetTitle></SheetHeader>
               <div className="grid gap-3 mt-4">
                 <div><Label>Party</Label><PartyCombobox value={form.party_id} onChange={v => setForm({ ...form, party_id: v })} type="client" /></div>
+                {partyGsts.length > 0 && (
+                  <div><Label>Bill to GSTIN</Label>
+                    <Select value={form.party_gst_id ?? undefined} onValueChange={v => setForm({ ...form, party_gst_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select GSTIN" /></SelectTrigger>
+                      <SelectContent>{partyGsts.map(g => <SelectItem key={g.id} value={g.id}><span className="font-mono text-xs">{g.gstin}</span> · {g.state}{g.is_default ? " · default" : ""}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div><Label>Vehicle</Label><VehicleCombobox value={form.vehicle_id} onChange={v => setForm({ ...form, vehicle_id: v })} /></div>
+                <div><Label>Product</Label><ProductCombobox value={form.product_id} onChange={v => setForm({ ...form, product_id: v })} onPick={onProductPick} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>From</Label><Input value={form.from_city} onChange={e => setForm({ ...form, from_city: e.target.value })} /></div>
-                  <div><Label>To</Label><Input value={form.to_city} onChange={e => setForm({ ...form, to_city: e.target.value })} /></div>
+                  <div><Label>From city</Label><Input value={form.from_city} onChange={e => setForm({ ...form, from_city: e.target.value })} /></div>
+                  <div><Label>To city</Label><Input value={form.to_city} onChange={e => setForm({ ...form, to_city: e.target.value })} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Consignor state</Label><StateSelect value={form.consignor_state} onChange={v => setForm({ ...form, consignor_state: v })} /></div>
+                  <div><Label>Consignee state</Label><StateSelect value={form.consignee_state} onChange={v => setForm({ ...form, consignee_state: v })} /></div>
                 </div>
                 <div><Label>Material</Label><Input value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div><Label>Weight (t)</Label><Input type="number" value={form.weight_tons} onChange={e => setForm({ ...form, weight_tons: e.target.value })} /></div>
                   <div><Label>Freight (₹)</Label><Input type="number" value={form.freight_amount} onChange={e => setForm({ ...form, freight_amount: e.target.value })} /></div>
+                  <div><Label>GST %</Label><Input type="number" value={form.gst_rate} onChange={e => setForm({ ...form, gst_rate: e.target.value })} /></div>
                 </div>
                 <div><Label>Advance (₹)</Label><Input type="number" value={form.advance_amount} onChange={e => setForm({ ...form, advance_amount: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Driver</Label><Input value={form.driver_name} onChange={e => setForm({ ...form, driver_name: e.target.value })} /></div>
                   <div><Label>Phone</Label><Input value={form.driver_phone} onChange={e => setForm({ ...form, driver_phone: e.target.value })} /></div>
+                </div>
+                <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-1">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Tax preview · {preview.interstate ? "IGST (interstate)" : "CGST + SGST (intrastate)"}</div>
+                  <div className="flex justify-between"><span>Freight</span><span>{fmtINR(base)}</span></div>
+                  {preview.interstate
+                    ? <div className="flex justify-between"><span>IGST</span><span>{fmtINR(preview.igst)}</span></div>
+                    : <><div className="flex justify-between"><span>CGST</span><span>{fmtINR(preview.cgst)}</span></div><div className="flex justify-between"><span>SGST</span><span>{fmtINR(preview.sgst)}</span></div></>}
+                  <div className="flex justify-between font-semibold border-t pt-1"><span>Total</span><span>{fmtINR(preview.total)}</span></div>
                 </div>
               </div>
               <SheetFooter className="mt-4"><Button onClick={submit}>Create</Button></SheetFooter>
@@ -129,7 +226,7 @@ function OrdersPage() {
             <TableHeader><TableRow>
               <TableHead>Order</TableHead><TableHead>Party</TableHead><TableHead>Route</TableHead>
               <TableHead>Vehicle</TableHead><TableHead className="text-right">Freight</TableHead>
-              <TableHead className="text-right">Balance</TableHead><TableHead>Status</TableHead>
+              <TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead>
               <TableHead>Bilty</TableHead><TableHead></TableHead>
             </TableRow></TableHeader>
             <TableBody>
@@ -141,7 +238,7 @@ function OrdersPage() {
                   <TableCell>{r.from_city} <ArrowRight className="inline size-3 mx-1 text-muted-foreground" /> {r.to_city}</TableCell>
                   <TableCell className="text-xs">{r.vehicles?.number ?? "—"}</TableCell>
                   <TableCell className="text-right">{fmtINR(r.freight_amount)}</TableCell>
-                  <TableCell className="text-right">{fmtINR(Number(r.freight_amount) - Number(r.advance_amount))}</TableCell>
+                  <TableCell className="text-right font-medium">{fmtINR(r.total_amount || r.freight_amount)}</TableCell>
                   <TableCell><StatusBadge value={r.status} /></TableCell>
                   <TableCell className="font-mono text-xs">{r.bilty_no ?? "—"}</TableCell>
                   <TableCell onClick={e => e.stopPropagation()} className="flex gap-1">
@@ -164,13 +261,11 @@ function OrderDetail({ id, onClose, onStatus, onBilty }: { id: string | null; on
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const { data: d } = await supabase.from("orders").select("id,order_no,from_city,to_city,freight_amount,advance_amount,status,bilty_no,pickup_at,delivered_at,created_at,parties(name),vehicles(number)").eq("id", id).maybeSingle();
+      const { data: d } = await supabase.from("orders").select("id,order_no,from_city,to_city,freight_amount,advance_amount,total_amount,status,bilty_no,pickup_at,delivered_at,created_at,cgst_amount,sgst_amount,igst_amount,parties(name),vehicles(number)").eq("id", id).maybeSingle();
       setData(d as never as Row);
     })();
   }, [id]);
-
   const STEPS = ["created","loaded","in_transit","delivered"];
-
   return (
     <Sheet open={!!id} onOpenChange={o => !o && onClose()}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
@@ -182,12 +277,13 @@ function OrderDetail({ id, onClose, onStatus, onBilty }: { id: string | null; on
               <div><div className="text-muted-foreground text-xs">Vehicle</div><div>{data.vehicles?.number ?? "—"}</div></div>
               <div><div className="text-muted-foreground text-xs">Route</div><div>{data.from_city} → {data.to_city}</div></div>
               <div><div className="text-muted-foreground text-xs">Freight</div><div>{fmtINR(data.freight_amount)}</div></div>
-              <div><div className="text-muted-foreground text-xs">Advance</div><div>{fmtINR(data.advance_amount)}</div></div>
-              <div><div className="text-muted-foreground text-xs">Balance</div><div>{fmtINR(Number(data.freight_amount) - Number(data.advance_amount))}</div></div>
+              <div><div className="text-muted-foreground text-xs">CGST/SGST</div><div>{fmtINR((data.cgst_amount || 0) + (data.sgst_amount || 0))}</div></div>
+              <div><div className="text-muted-foreground text-xs">IGST</div><div>{fmtINR(data.igst_amount)}</div></div>
+              <div><div className="text-muted-foreground text-xs">Total</div><div className="font-semibold">{fmtINR(data.total_amount || data.freight_amount)}</div></div>
+              <div><div className="text-muted-foreground text-xs">Balance</div><div>{fmtINR((data.total_amount || data.freight_amount) - Number(data.advance_amount))}</div></div>
               <div><div className="text-muted-foreground text-xs">Pickup</div><div>{fmtDate(data.pickup_at)}</div></div>
               <div><div className="text-muted-foreground text-xs">Delivered</div><div>{fmtDate(data.delivered_at)}</div></div>
             </div>
-
             <div>
               <div className="font-medium text-sm mb-2 flex items-center gap-2"><Truck className="size-4" /> Status timeline</div>
               <div className="flex flex-wrap gap-2">
@@ -198,7 +294,6 @@ function OrderDetail({ id, onClose, onStatus, onBilty }: { id: string | null; on
                 ))}
               </div>
             </div>
-
             <Button className="w-full" onClick={() => onBilty(data.id)}><FileText className="size-4 mr-1" /> {data.bilty_no ? `Print Bilty ${data.bilty_no}` : "Generate Bilty (LR)"}</Button>
           </div>
         )}

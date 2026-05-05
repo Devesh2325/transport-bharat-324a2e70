@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { ProductCombobox } from "@/components/ProductCombobox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { PageHeader } from "@/components/PageHeader";
@@ -25,7 +26,7 @@ interface Row {
   parties: { name: string } | null;
 }
 
-const empty = { party_id: null as string | null, from_city: "", to_city: "", material: "", vehicle_type: "", weight_tons: "", expected_rate: "", notes: "" };
+const empty = { party_id: null as string | null, product_id: null as string | null, from_city: "", to_city: "", material: "", vehicle_type: "", weight_tons: "", expected_rate: "", notes: "" };
 
 function InquiriesPage() {
   const { company, user } = useAuth();
@@ -53,7 +54,7 @@ function InquiriesPage() {
     if (!company || !user) return;
     const inquiry_no = await nextDocNo(company.id, "INQ");
     const { error } = await supabase.from("inquiries").insert({
-      company_id: company.id, inquiry_no, party_id: form.party_id,
+      company_id: company.id, inquiry_no, party_id: form.party_id, product_id: form.product_id,
       from_city: form.from_city, to_city: form.to_city, material: form.material,
       vehicle_type: form.vehicle_type,
       weight_tons: form.weight_tons ? Number(form.weight_tons) : null,
@@ -88,6 +89,7 @@ function InquiriesPage() {
               <SheetHeader><SheetTitle>New Inquiry</SheetTitle></SheetHeader>
               <div className="grid gap-3 mt-4">
                 <div><Label>Party (Client)</Label><PartyCombobox value={form.party_id} onChange={v => setForm({ ...form, party_id: v })} type="client" /></div>
+                <div><Label>Product</Label><ProductCombobox value={form.product_id} onChange={v => setForm({ ...form, product_id: v })} onPick={p => setForm(f => ({ ...f, material: p.name, expected_rate: f.expected_rate || (p.default_rate ? String(p.default_rate) : "") }))} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>From</Label><Input value={form.from_city} onChange={e => setForm({ ...form, from_city: e.target.value })} /></div>
                   <div><Label>To</Label><Input value={form.to_city} onChange={e => setForm({ ...form, to_city: e.target.value })} /></div>
@@ -161,6 +163,7 @@ function InquiriesPage() {
 
 function DetailSheet({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState<Row | null>(null);
   const [quotes, setQuotes] = useState<{ id: string; quoted_rate: number | null; counter_rate: number | null; note: string | null; created_at: string }[]>([]);
   const [quoted, setQuoted] = useState(""); const [counter, setCounter] = useState(""); const [note, setNote] = useState("");
@@ -226,6 +229,15 @@ function DetailSheet({ id, onClose }: { id: string | null; onClose: () => void }
               <Textarea className="mt-2" placeholder="Note" value={note} onChange={e => setNote(e.target.value)} />
               <Button className="mt-2 w-full" onClick={addQuote}>Add quote</Button>
             </div>
+
+            <Button className="w-full" variant="default" onClick={async () => {
+              if (!id) return;
+              await supabase.from("inquiries").update({ status: "won" as never }).eq("id", id);
+              toast.success("Inquiry won — opening order");
+              navigate({ to: "/orders", search: { fromInquiry: id } });
+            }}>
+              <ArrowRight className="size-4 mr-1" /> Convert to Order
+            </Button>
           </div>
         )}
       </SheetContent>
