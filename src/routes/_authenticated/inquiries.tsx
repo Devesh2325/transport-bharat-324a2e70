@@ -54,7 +54,7 @@ function InquiriesPage() {
     if (!company || !user) return;
     const inquiry_no = await nextDocNo(company.id, "INQ");
     const { error } = await supabase.from("inquiries").insert({
-      company_id: company.id, inquiry_no, party_id: form.party_id,
+      company_id: company.id, inquiry_no, party_id: form.party_id, product_id: form.product_id,
       from_city: form.from_city, to_city: form.to_city, material: form.material,
       vehicle_type: form.vehicle_type,
       weight_tons: form.weight_tons ? Number(form.weight_tons) : null,
