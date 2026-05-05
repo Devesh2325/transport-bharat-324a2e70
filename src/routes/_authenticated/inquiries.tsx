@@ -26,7 +26,7 @@ interface Row {
   parties: { name: string } | null;
 }
 
-const empty = { party_id: null as string | null, from_city: "", to_city: "", material: "", vehicle_type: "", weight_tons: "", expected_rate: "", notes: "" };
+const empty = { party_id: null as string | null, product_id: null as string | null, from_city: "", to_city: "", material: "", vehicle_type: "", weight_tons: "", expected_rate: "", notes: "" };
 
 function InquiriesPage() {
   const { company, user } = useAuth();
