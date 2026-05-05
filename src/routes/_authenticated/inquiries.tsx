@@ -163,6 +163,7 @@ function InquiriesPage() {
 
 function DetailSheet({ id, onClose }: { id: string | null; onClose: () => void }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState<Row | null>(null);
   const [quotes, setQuotes] = useState<{ id: string; quoted_rate: number | null; counter_rate: number | null; note: string | null; created_at: string }[]>([]);
   const [quoted, setQuoted] = useState(""); const [counter, setCounter] = useState(""); const [note, setNote] = useState("");
