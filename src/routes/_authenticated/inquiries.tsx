@@ -89,6 +89,7 @@ function InquiriesPage() {
               <SheetHeader><SheetTitle>New Inquiry</SheetTitle></SheetHeader>
               <div className="grid gap-3 mt-4">
                 <div><Label>Party (Client)</Label><PartyCombobox value={form.party_id} onChange={v => setForm({ ...form, party_id: v })} type="client" /></div>
+                <div><Label>Product</Label><ProductCombobox value={form.product_id} onChange={v => setForm({ ...form, product_id: v })} onPick={p => setForm(f => ({ ...f, material: p.name, expected_rate: f.expected_rate || (p.default_rate ? String(p.default_rate) : "") }))} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>From</Label><Input value={form.from_city} onChange={e => setForm({ ...form, from_city: e.target.value })} /></div>
                   <div><Label>To</Label><Input value={form.to_city} onChange={e => setForm({ ...form, to_city: e.target.value })} /></div>
