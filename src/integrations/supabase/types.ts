@@ -193,6 +193,7 @@ export type Database = {
           material: string | null
           notes: string | null
           party_id: string | null
+          product_id: string | null
           status: Database["public"]["Enums"]["inquiry_status"]
           to_city: string | null
           updated_at: string
@@ -210,6 +211,7 @@ export type Database = {
           material?: string | null
           notes?: string | null
           party_id?: string | null
+          product_id?: string | null
           status?: Database["public"]["Enums"]["inquiry_status"]
           to_city?: string | null
           updated_at?: string
@@ -227,6 +229,7 @@ export type Database = {
           material?: string | null
           notes?: string | null
           party_id?: string | null
+          product_id?: string | null
           status?: Database["public"]["Enums"]["inquiry_status"]
           to_city?: string | null
           updated_at?: string
@@ -302,7 +305,10 @@ export type Database = {
         Row: {
           advance_amount: number
           bilty_no: string | null
+          cgst_amount: number | null
           company_id: string
+          consignee_state: string | null
+          consignor_state: string | null
           created_at: string
           created_by: string | null
           delivered_at: string | null
@@ -310,15 +316,21 @@ export type Database = {
           driver_phone: string | null
           freight_amount: number
           from_city: string | null
+          gst_rate: number | null
           id: string
+          igst_amount: number | null
           inquiry_id: string | null
           material: string | null
           notes: string | null
           order_no: string
+          party_gst_id: string | null
           party_id: string | null
           pickup_at: string | null
+          product_id: string | null
+          sgst_amount: number | null
           status: Database["public"]["Enums"]["order_status"]
           to_city: string | null
+          total_amount: number | null
           updated_at: string
           vehicle_id: string | null
           weight_tons: number | null
@@ -326,7 +338,10 @@ export type Database = {
         Insert: {
           advance_amount?: number
           bilty_no?: string | null
+          cgst_amount?: number | null
           company_id: string
+          consignee_state?: string | null
+          consignor_state?: string | null
           created_at?: string
           created_by?: string | null
           delivered_at?: string | null
@@ -334,15 +349,21 @@ export type Database = {
           driver_phone?: string | null
           freight_amount?: number
           from_city?: string | null
+          gst_rate?: number | null
           id?: string
+          igst_amount?: number | null
           inquiry_id?: string | null
           material?: string | null
           notes?: string | null
           order_no: string
+          party_gst_id?: string | null
           party_id?: string | null
           pickup_at?: string | null
+          product_id?: string | null
+          sgst_amount?: number | null
           status?: Database["public"]["Enums"]["order_status"]
           to_city?: string | null
+          total_amount?: number | null
           updated_at?: string
           vehicle_id?: string | null
           weight_tons?: number | null
@@ -350,7 +371,10 @@ export type Database = {
         Update: {
           advance_amount?: number
           bilty_no?: string | null
+          cgst_amount?: number | null
           company_id?: string
+          consignee_state?: string | null
+          consignor_state?: string | null
           created_at?: string
           created_by?: string | null
           delivered_at?: string | null
@@ -358,15 +382,21 @@ export type Database = {
           driver_phone?: string | null
           freight_amount?: number
           from_city?: string | null
+          gst_rate?: number | null
           id?: string
+          igst_amount?: number | null
           inquiry_id?: string | null
           material?: string | null
           notes?: string | null
           order_no?: string
+          party_gst_id?: string | null
           party_id?: string | null
           pickup_at?: string | null
+          product_id?: string | null
+          sgst_amount?: number | null
           status?: Database["public"]["Enums"]["order_status"]
           to_city?: string | null
+          total_amount?: number | null
           updated_at?: string
           vehicle_id?: string | null
           weight_tons?: number | null
@@ -451,6 +481,50 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      party_gst_registrations: {
+        Row: {
+          address: string | null
+          company_id: string
+          created_at: string
+          gstin: string
+          id: string
+          is_default: boolean
+          legal_name: string | null
+          party_id: string
+          state: string
+        }
+        Insert: {
+          address?: string | null
+          company_id: string
+          created_at?: string
+          gstin: string
+          id?: string
+          is_default?: boolean
+          legal_name?: string | null
+          party_id: string
+          state: string
+        }
+        Update: {
+          address?: string | null
+          company_id?: string
+          created_at?: string
+          gstin?: string
+          id?: string
+          is_default?: boolean
+          legal_name?: string | null
+          party_id?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "party_gst_registrations_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
             referencedColumns: ["id"]
           },
         ]
@@ -555,6 +629,45 @@ export type Database = {
           price_inr?: number
           storage_mb?: number
           user_limit?: number
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          company_id: string
+          created_at: string
+          default_rate: number | null
+          gst_rate: number | null
+          hsn_code: string | null
+          id: string
+          name: string
+          notes: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          default_rate?: number | null
+          gst_rate?: number | null
+          hsn_code?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          default_rate?: number | null
+          gst_rate?: number | null
+          hsn_code?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          unit?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -688,6 +801,10 @@ export type Database = {
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       next_doc_no: {
         Args: { _company_id: string; _kind: string; _prefix: string }
+        Returns: string
+      }
+      pick_party_gst: {
+        Args: { _party_id: string; _state: string }
         Returns: string
       }
       report_party_outstanding: {
