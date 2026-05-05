@@ -229,6 +229,15 @@ function DetailSheet({ id, onClose }: { id: string | null; onClose: () => void }
               <Textarea className="mt-2" placeholder="Note" value={note} onChange={e => setNote(e.target.value)} />
               <Button className="mt-2 w-full" onClick={addQuote}>Add quote</Button>
             </div>
+
+            <Button className="w-full" variant="default" onClick={async () => {
+              if (!id) return;
+              await supabase.from("inquiries").update({ status: "won" as never }).eq("id", id);
+              toast.success("Inquiry won — opening order");
+              navigate({ to: "/orders", search: { fromInquiry: id } });
+            }}>
+              <ArrowRight className="size-4 mr-1" /> Convert to Order
+            </Button>
           </div>
         )}
       </SheetContent>
