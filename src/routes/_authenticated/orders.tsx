@@ -213,6 +213,12 @@ function OrdersPage() {
                     ? <div className="flex justify-between"><span>IGST</span><span>{fmtINR(preview.igst)}</span></div>
                     : <><div className="flex justify-between"><span>CGST</span><span>{fmtINR(preview.cgst)}</span></div><div className="flex justify-between"><span>SGST</span><span>{fmtINR(preview.sgst)}</span></div></>}
                   <div className="flex justify-between font-semibold border-t pt-1"><span>Total</span><span>{fmtINR(preview.total)}</span></div>
+                  {isAdmin && Number(form.transporter_amount || 0) > 0 && (
+                    <div className="flex justify-between border-t pt-1 text-emerald-700 dark:text-emerald-400 font-medium">
+                      <span>Margin (Freight − Transporter)</span>
+                      <span>{fmtINR(base - Number(form.transporter_amount || 0))}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <SheetFooter className="mt-4"><Button onClick={submit}>Create</Button></SheetFooter>
