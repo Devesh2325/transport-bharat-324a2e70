@@ -290,18 +290,20 @@ function OrdersPage() {
         </div>
       </div>
 
-      <OrderDetail id={detailId} onClose={() => { setDetailId(null); load(); }} onStatus={setStatus} onBilty={generateBilty} />
+      <OrderDetail id={detailId} isAdmin={isAdmin} onClose={() => { setDetailId(null); load(); }} onStatus={setStatus} onBilty={generateBilty} onInvoice={generateInvoice} />
     </div>
   );
 }
 
-function OrderDetail({ id, onClose, onStatus, onBilty }: { id: string | null; onClose: () => void; onStatus: (id: string, s: string) => void; onBilty: (id: string) => void }) {
-  const [data, setData] = useState<Row | null>(null);
+interface DetailRow extends Row { transporter_amount?: number | null; profit_amount?: number | null; transporter_party?: { name: string } | null }
+
+function OrderDetail({ id, isAdmin, onClose, onStatus, onBilty, onInvoice }: { id: string | null; isAdmin: boolean; onClose: () => void; onStatus: (id: string, s: string) => void; onBilty: (id: string) => void; onInvoice: (id: string) => void }) {
+  const [data, setData] = useState<DetailRow | null>(null);
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const { data: d } = await supabase.from("orders").select("id,order_no,from_city,to_city,freight_amount,advance_amount,total_amount,status,bilty_no,pickup_at,delivered_at,created_at,cgst_amount,sgst_amount,igst_amount,parties(name),vehicles(number)").eq("id", id).maybeSingle();
-      setData(d as never as Row);
+      const { data: d } = await supabase.from("orders").select("id,order_no,from_city,to_city,freight_amount,advance_amount,total_amount,status,bilty_no,pickup_at,delivered_at,created_at,cgst_amount,sgst_amount,igst_amount,transporter_amount,profit_amount,parties!orders_party_id_fkey(name),vehicles(number),transporter_party:parties!orders_transporter_party_id_fkey(name)").eq("id", id).maybeSingle();
+      setData(d as never as DetailRow);
     })();
   }, [id]);
   const STEPS = ["created","loaded","in_transit","delivered"];
@@ -316,10 +318,18 @@ function OrderDetail({ id, onClose, onStatus, onBilty }: { id: string | null; on
               <div><div className="text-muted-foreground text-xs">Vehicle</div><div>{data.vehicles?.number ?? "—"}</div></div>
               <div><div className="text-muted-foreground text-xs">Route</div><div>{data.from_city} → {data.to_city}</div></div>
               <div><div className="text-muted-foreground text-xs">Freight</div><div>{fmtINR(data.freight_amount)}</div></div>
+              <div><div className="text-muted-foreground text-xs">Transporter</div><div>{data.transporter_party?.name ?? "—"}</div></div>
+              <div><div className="text-muted-foreground text-xs">Transporter cost</div><div>{fmtINR(data.transporter_amount)}</div></div>
               <div><div className="text-muted-foreground text-xs">CGST/SGST</div><div>{fmtINR((data.cgst_amount || 0) + (data.sgst_amount || 0))}</div></div>
               <div><div className="text-muted-foreground text-xs">IGST</div><div>{fmtINR(data.igst_amount)}</div></div>
               <div><div className="text-muted-foreground text-xs">Total</div><div className="font-semibold">{fmtINR(data.total_amount || data.freight_amount)}</div></div>
               <div><div className="text-muted-foreground text-xs">Balance</div><div>{fmtINR((data.total_amount || data.freight_amount) - Number(data.advance_amount))}</div></div>
+              {isAdmin && (
+                <div className="col-span-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-3">
+                  <div className="text-emerald-700 dark:text-emerald-400 text-xs uppercase tracking-wider">Margin (Admin only)</div>
+                  <div className="font-display font-bold text-xl text-emerald-700 dark:text-emerald-400">{fmtINR(data.profit_amount)}</div>
+                </div>
+              )}
               <div><div className="text-muted-foreground text-xs">Pickup</div><div>{fmtDate(data.pickup_at)}</div></div>
               <div><div className="text-muted-foreground text-xs">Delivered</div><div>{fmtDate(data.delivered_at)}</div></div>
             </div>
@@ -333,10 +343,14 @@ function OrderDetail({ id, onClose, onStatus, onBilty }: { id: string | null; on
                 ))}
               </div>
             </div>
-            <Button className="w-full" onClick={() => onBilty(data.id)}><FileText className="size-4 mr-1" /> {data.bilty_no ? `Print Bilty ${data.bilty_no}` : "Generate Bilty (LR)"}</Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={() => onBilty(data.id)}><FileText className="size-4 mr-1" /> {data.bilty_no ? `Bilty ${data.bilty_no}` : "Generate Bilty"}</Button>
+              <Button variant="outline" onClick={() => onInvoice(data.id)}><FileText className="size-4 mr-1" /> Tax Invoice</Button>
+            </div>
           </div>
         )}
       </SheetContent>
     </Sheet>
   );
+}
 }
