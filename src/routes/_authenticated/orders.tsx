@@ -37,13 +37,15 @@ interface Row {
 const empty = {
   party_id: null as string | null, vehicle_id: null as string | null, product_id: null as string | null,
   party_gst_id: null as string | null,
+  transporter_party_id: null as string | null, transporter_amount: "",
   from_city: "", to_city: "", consignor_state: "", consignee_state: "",
   material: "", weight_tons: "", freight_amount: "", advance_amount: "",
   driver_name: "", driver_phone: "", gst_rate: "5",
 };
 
 function OrdersPage() {
-  const { company, user } = useAuth();
+  const { company, user, roles } = useAuth();
+  const isAdmin = roles.includes("company_admin") || roles.includes("super_admin");
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/orders" });
   const [rows, setRows] = useState<Row[]>([]);
@@ -120,6 +122,8 @@ function OrdersPage() {
     const { error } = await supabase.from("orders").insert({
       company_id: company.id, order_no,
       party_id: form.party_id, vehicle_id: form.vehicle_id, product_id: form.product_id,
+      transporter_party_id: form.transporter_party_id,
+      transporter_amount: Number(form.transporter_amount || 0),
       party_gst_id: form.party_gst_id, gst_rate: Number(form.gst_rate || 0),
       consignor_state: form.consignor_state || null, consignee_state: form.consignee_state || null,
       cgst_amount: split.cgst, sgst_amount: split.sgst, igst_amount: split.igst, total_amount: split.total,
