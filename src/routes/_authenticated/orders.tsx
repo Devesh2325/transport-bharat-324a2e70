@@ -182,6 +182,10 @@ function OrdersPage() {
                   </div>
                 )}
                 <div><Label>Vehicle</Label><VehicleCombobox value={form.vehicle_id} onChange={v => setForm({ ...form, vehicle_id: v })} /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Transporter</Label><PartyCombobox value={form.transporter_party_id} onChange={v => setForm({ ...form, transporter_party_id: v })} type="transporter" /></div>
+                  <div><Label>Transporter cost (₹)</Label><Input type="number" value={form.transporter_amount} onChange={e => setForm({ ...form, transporter_amount: e.target.value })} placeholder="Amount payable to transporter" /></div>
+                </div>
                 <div><Label>Product</Label><ProductCombobox value={form.product_id} onChange={v => setForm({ ...form, product_id: v })} onPick={onProductPick} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>From city</Label><Input value={form.from_city} onChange={e => setForm({ ...form, from_city: e.target.value })} /></div>
