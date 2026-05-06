@@ -55,48 +55,111 @@ export type Database = {
           },
         ]
       }
+      bilty_audits: {
+        Row: {
+          changed_by: string | null
+          changes: Json
+          company_id: string
+          created_at: string
+          id: string
+          order_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          changes: Json
+          company_id: string
+          created_at?: string
+          id?: string
+          order_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          changes?: Json
+          company_id?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
+          address: string | null
+          bank_account_no: string | null
+          bank_branch: string | null
+          bank_ifsc: string | null
+          bank_name: string | null
+          bilty_template: string
           brand_accent: string | null
           brand_primary: string | null
           created_at: string
+          email: string | null
           gst_number: string | null
           id: string
+          invoice_footer: string | null
+          invoice_terms: string | null
           logo_url: string | null
           name: string
+          phone: string | null
           plan_expires_at: string | null
           plan_id: string
+          signature_url: string | null
           slug: string
+          stamp_url: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at: string
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          bank_account_no?: string | null
+          bank_branch?: string | null
+          bank_ifsc?: string | null
+          bank_name?: string | null
+          bilty_template?: string
           brand_accent?: string | null
           brand_primary?: string | null
           created_at?: string
+          email?: string | null
           gst_number?: string | null
           id?: string
+          invoice_footer?: string | null
+          invoice_terms?: string | null
           logo_url?: string | null
           name: string
+          phone?: string | null
           plan_expires_at?: string | null
           plan_id: string
+          signature_url?: string | null
           slug: string
+          stamp_url?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          bank_account_no?: string | null
+          bank_branch?: string | null
+          bank_ifsc?: string | null
+          bank_name?: string | null
+          bilty_template?: string
           brand_accent?: string | null
           brand_primary?: string | null
           created_at?: string
+          email?: string | null
           gst_number?: string | null
           id?: string
+          invoice_footer?: string | null
+          invoice_terms?: string | null
           logo_url?: string | null
           name?: string
+          phone?: string | null
           plan_expires_at?: string | null
           plan_id?: string
+          signature_url?: string | null
           slug?: string
+          stamp_url?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string
           updated_at?: string
@@ -301,6 +364,125 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          description: string
+          gst_rate: number
+          hsn_code: string | null
+          id: string
+          invoice_id: string
+          qty: number
+          rate: number
+          unit: string | null
+        }
+        Insert: {
+          amount?: number
+          company_id: string
+          created_at?: string
+          description: string
+          gst_rate?: number
+          hsn_code?: string | null
+          id?: string
+          invoice_id: string
+          qty?: number
+          rate?: number
+          unit?: string | null
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          description?: string
+          gst_rate?: number
+          hsn_code?: string | null
+          id?: string
+          invoice_id?: string
+          qty?: number
+          rate?: number
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          cgst_amount: number
+          company_id: string
+          consignee_state: string | null
+          consignor_state: string | null
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          id: string
+          igst_amount: number
+          invoice_date: string
+          invoice_no: string
+          notes: string | null
+          order_id: string | null
+          party_gst_id: string | null
+          party_id: string | null
+          sgst_amount: number
+          status: string
+          subtotal: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          cgst_amount?: number
+          company_id: string
+          consignee_state?: string | null
+          consignor_state?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          igst_amount?: number
+          invoice_date?: string
+          invoice_no: string
+          notes?: string | null
+          order_id?: string | null
+          party_gst_id?: string | null
+          party_id?: string | null
+          sgst_amount?: number
+          status?: string
+          subtotal?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          cgst_amount?: number
+          company_id?: string
+          consignee_state?: string | null
+          consignor_state?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          igst_amount?: number
+          invoice_date?: string
+          invoice_no?: string
+          notes?: string | null
+          order_id?: string | null
+          party_gst_id?: string | null
+          party_id?: string | null
+          sgst_amount?: number
+          status?: string
+          subtotal?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           advance_amount: number
@@ -327,10 +509,13 @@ export type Database = {
           party_id: string | null
           pickup_at: string | null
           product_id: string | null
+          profit_amount: number | null
           sgst_amount: number | null
           status: Database["public"]["Enums"]["order_status"]
           to_city: string | null
           total_amount: number | null
+          transporter_amount: number
+          transporter_party_id: string | null
           updated_at: string
           vehicle_id: string | null
           weight_tons: number | null
@@ -360,10 +545,13 @@ export type Database = {
           party_id?: string | null
           pickup_at?: string | null
           product_id?: string | null
+          profit_amount?: number | null
           sgst_amount?: number | null
           status?: Database["public"]["Enums"]["order_status"]
           to_city?: string | null
           total_amount?: number | null
+          transporter_amount?: number
+          transporter_party_id?: string | null
           updated_at?: string
           vehicle_id?: string | null
           weight_tons?: number | null
@@ -393,10 +581,13 @@ export type Database = {
           party_id?: string | null
           pickup_at?: string | null
           product_id?: string | null
+          profit_amount?: number | null
           sgst_amount?: number | null
           status?: Database["public"]["Enums"]["order_status"]
           to_city?: string | null
           total_amount?: number | null
+          transporter_amount?: number
+          transporter_party_id?: string | null
           updated_at?: string
           vehicle_id?: string | null
           weight_tons?: number | null
@@ -435,13 +626,19 @@ export type Database = {
       parties: {
         Row: {
           address: string | null
+          bank_account_no: string | null
+          bank_ifsc: string | null
+          bank_name: string | null
           city: string | null
           company_id: string
+          contact_person: string | null
           created_at: string
+          credit_limit: number
           email: string | null
           gst: string | null
           id: string
           name: string
+          pan: string | null
           phone: string | null
           state: string | null
           type: Database["public"]["Enums"]["party_type"]
@@ -449,13 +646,19 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          bank_account_no?: string | null
+          bank_ifsc?: string | null
+          bank_name?: string | null
           city?: string | null
           company_id: string
+          contact_person?: string | null
           created_at?: string
+          credit_limit?: number
           email?: string | null
           gst?: string | null
           id?: string
           name: string
+          pan?: string | null
           phone?: string | null
           state?: string | null
           type?: Database["public"]["Enums"]["party_type"]
@@ -463,13 +666,19 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          bank_account_no?: string | null
+          bank_ifsc?: string | null
+          bank_name?: string | null
           city?: string | null
           company_id?: string
+          contact_person?: string | null
           created_at?: string
+          credit_limit?: number
           email?: string | null
           gst?: string | null
           id?: string
           name?: string
+          pan?: string | null
           phone?: string | null
           state?: string | null
           type?: Database["public"]["Enums"]["party_type"]
@@ -532,11 +741,13 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          bank_account_id: string | null
           company_id: string
           created_at: string
           created_by: string | null
           direction: Database["public"]["Enums"]["payment_direction"]
           id: string
+          invoice_id: string | null
           mode: Database["public"]["Enums"]["payment_mode"]
           notes: string | null
           order_id: string | null
@@ -546,11 +757,13 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bank_account_id?: string | null
           company_id: string
           created_at?: string
           created_by?: string | null
           direction: Database["public"]["Enums"]["payment_direction"]
           id?: string
+          invoice_id?: string | null
           mode?: Database["public"]["Enums"]["payment_mode"]
           notes?: string | null
           order_id?: string | null
@@ -560,11 +773,13 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
           company_id?: string
           created_at?: string
           created_by?: string | null
           direction?: Database["public"]["Enums"]["payment_direction"]
           id?: string
+          invoice_id?: string | null
           mode?: Database["public"]["Enums"]["payment_mode"]
           notes?: string | null
           order_id?: string | null
@@ -802,6 +1017,16 @@ export type Database = {
       next_doc_no: {
         Args: { _company_id: string; _kind: string; _prefix: string }
         Returns: string
+      }
+      party_ledger: {
+        Args: { _company_id: string; _party_id: string }
+        Returns: {
+          credit: number
+          debit: number
+          description: string
+          entry_date: string
+          ref: string
+        }[]
       }
       pick_party_gst: {
         Args: { _party_id: string; _state: string }

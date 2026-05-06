@@ -37,13 +37,15 @@ interface Row {
 const empty = {
   party_id: null as string | null, vehicle_id: null as string | null, product_id: null as string | null,
   party_gst_id: null as string | null,
+  transporter_party_id: null as string | null, transporter_amount: "",
   from_city: "", to_city: "", consignor_state: "", consignee_state: "",
   material: "", weight_tons: "", freight_amount: "", advance_amount: "",
   driver_name: "", driver_phone: "", gst_rate: "5",
 };
 
 function OrdersPage() {
-  const { company, user } = useAuth();
+  const { company, user, roles } = useAuth();
+  const isAdmin = roles.includes("company_admin") || roles.includes("super_admin");
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/orders" });
   const [rows, setRows] = useState<Row[]>([]);
@@ -120,6 +122,8 @@ function OrdersPage() {
     const { error } = await supabase.from("orders").insert({
       company_id: company.id, order_no,
       party_id: form.party_id, vehicle_id: form.vehicle_id, product_id: form.product_id,
+      transporter_party_id: form.transporter_party_id,
+      transporter_amount: Number(form.transporter_amount || 0),
       party_gst_id: form.party_gst_id, gst_rate: Number(form.gst_rate || 0),
       consignor_state: form.consignor_state || null, consignee_state: form.consignee_state || null,
       cgst_amount: split.cgst, sgst_amount: split.sgst, igst_amount: split.igst, total_amount: split.total,
@@ -155,6 +159,31 @@ function OrdersPage() {
     load();
   };
 
+  const generateInvoice = async (id: string) => {
+    if (!company) return;
+    const { data: o } = await supabase.from("orders").select("*").eq("id", id).single();
+    if (!o) return;
+    const { data: existing } = await supabase.from("invoices").select("id").eq("order_id", id).maybeSingle();
+    if (existing) { window.open(`/invoices/${existing.id}`, "_blank"); return; }
+    const seq = await nextDocNo(company.id, "ORD" as never);
+    const invoice_no = seq.replace("ORD-", "INV-");
+    const sub = Number(o.freight_amount);
+    const { data: inv, error } = await supabase.from("invoices").insert({
+      company_id: company.id, invoice_no, order_id: id, party_id: o.party_id, party_gst_id: o.party_gst_id,
+      consignor_state: o.consignor_state, consignee_state: o.consignee_state,
+      subtotal: sub, cgst_amount: o.cgst_amount ?? 0, sgst_amount: o.sgst_amount ?? 0, igst_amount: o.igst_amount ?? 0,
+      total_amount: o.total_amount || sub, created_by: user?.id ?? null,
+    }).select("id").single();
+    if (error || !inv) return toast.error(error?.message ?? "Failed");
+    await supabase.from("invoice_items").insert({
+      company_id: company.id, invoice_id: inv.id,
+      description: `Freight ${o.from_city ?? ""} to ${o.to_city ?? ""} · ${o.material ?? ""}`,
+      qty: 1, unit: "Trip", rate: sub, amount: sub, gst_rate: o.gst_rate ?? 5,
+    });
+    toast.success(`Invoice ${invoice_no} generated`);
+    window.open(`/invoices/${inv.id}`, "_blank");
+  };
+
   const filtered = rows.filter(r => filter === "all" || r.status === filter);
   const base = Number(form.freight_amount || 0);
   const preview = calcGst(base, Number(form.gst_rate || 0), form.consignor_state, form.consignee_state);
@@ -178,6 +207,10 @@ function OrdersPage() {
                   </div>
                 )}
                 <div><Label>Vehicle</Label><VehicleCombobox value={form.vehicle_id} onChange={v => setForm({ ...form, vehicle_id: v })} /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Transporter</Label><PartyCombobox value={form.transporter_party_id} onChange={v => setForm({ ...form, transporter_party_id: v })} type="transporter" /></div>
+                  <div><Label>Transporter cost (₹)</Label><Input type="number" value={form.transporter_amount} onChange={e => setForm({ ...form, transporter_amount: e.target.value })} placeholder="Amount payable to transporter" /></div>
+                </div>
                 <div><Label>Product</Label><ProductCombobox value={form.product_id} onChange={v => setForm({ ...form, product_id: v })} onPick={onProductPick} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>From city</Label><Input value={form.from_city} onChange={e => setForm({ ...form, from_city: e.target.value })} /></div>
@@ -205,6 +238,12 @@ function OrdersPage() {
                     ? <div className="flex justify-between"><span>IGST</span><span>{fmtINR(preview.igst)}</span></div>
                     : <><div className="flex justify-between"><span>CGST</span><span>{fmtINR(preview.cgst)}</span></div><div className="flex justify-between"><span>SGST</span><span>{fmtINR(preview.sgst)}</span></div></>}
                   <div className="flex justify-between font-semibold border-t pt-1"><span>Total</span><span>{fmtINR(preview.total)}</span></div>
+                  {isAdmin && Number(form.transporter_amount || 0) > 0 && (
+                    <div className="flex justify-between border-t pt-1 text-emerald-700 dark:text-emerald-400 font-medium">
+                      <span>Margin (Freight − Transporter)</span>
+                      <span>{fmtINR(base - Number(form.transporter_amount || 0))}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <SheetFooter className="mt-4"><Button onClick={submit}>Create</Button></SheetFooter>
@@ -251,18 +290,20 @@ function OrdersPage() {
         </div>
       </div>
 
-      <OrderDetail id={detailId} onClose={() => { setDetailId(null); load(); }} onStatus={setStatus} onBilty={generateBilty} />
+      <OrderDetail id={detailId} isAdmin={isAdmin} onClose={() => { setDetailId(null); load(); }} onStatus={setStatus} onBilty={generateBilty} onInvoice={generateInvoice} />
     </div>
   );
 }
 
-function OrderDetail({ id, onClose, onStatus, onBilty }: { id: string | null; onClose: () => void; onStatus: (id: string, s: string) => void; onBilty: (id: string) => void }) {
-  const [data, setData] = useState<Row | null>(null);
+interface DetailRow extends Row { transporter_amount?: number | null; profit_amount?: number | null; transporter_party?: { name: string } | null }
+
+function OrderDetail({ id, isAdmin, onClose, onStatus, onBilty, onInvoice }: { id: string | null; isAdmin: boolean; onClose: () => void; onStatus: (id: string, s: string) => void; onBilty: (id: string) => void; onInvoice: (id: string) => void }) {
+  const [data, setData] = useState<DetailRow | null>(null);
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const { data: d } = await supabase.from("orders").select("id,order_no,from_city,to_city,freight_amount,advance_amount,total_amount,status,bilty_no,pickup_at,delivered_at,created_at,cgst_amount,sgst_amount,igst_amount,parties(name),vehicles(number)").eq("id", id).maybeSingle();
-      setData(d as never as Row);
+      const { data: d } = await supabase.from("orders").select("id,order_no,from_city,to_city,freight_amount,advance_amount,total_amount,status,bilty_no,pickup_at,delivered_at,created_at,cgst_amount,sgst_amount,igst_amount,transporter_amount,profit_amount,parties!orders_party_id_fkey(name),vehicles(number),transporter_party:parties!orders_transporter_party_id_fkey(name)").eq("id", id).maybeSingle();
+      setData(d as never as DetailRow);
     })();
   }, [id]);
   const STEPS = ["created","loaded","in_transit","delivered"];
@@ -277,10 +318,18 @@ function OrderDetail({ id, onClose, onStatus, onBilty }: { id: string | null; on
               <div><div className="text-muted-foreground text-xs">Vehicle</div><div>{data.vehicles?.number ?? "—"}</div></div>
               <div><div className="text-muted-foreground text-xs">Route</div><div>{data.from_city} → {data.to_city}</div></div>
               <div><div className="text-muted-foreground text-xs">Freight</div><div>{fmtINR(data.freight_amount)}</div></div>
+              <div><div className="text-muted-foreground text-xs">Transporter</div><div>{data.transporter_party?.name ?? "—"}</div></div>
+              <div><div className="text-muted-foreground text-xs">Transporter cost</div><div>{fmtINR(data.transporter_amount)}</div></div>
               <div><div className="text-muted-foreground text-xs">CGST/SGST</div><div>{fmtINR((data.cgst_amount || 0) + (data.sgst_amount || 0))}</div></div>
               <div><div className="text-muted-foreground text-xs">IGST</div><div>{fmtINR(data.igst_amount)}</div></div>
               <div><div className="text-muted-foreground text-xs">Total</div><div className="font-semibold">{fmtINR(data.total_amount || data.freight_amount)}</div></div>
               <div><div className="text-muted-foreground text-xs">Balance</div><div>{fmtINR((data.total_amount || data.freight_amount) - Number(data.advance_amount))}</div></div>
+              {isAdmin && (
+                <div className="col-span-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-3">
+                  <div className="text-emerald-700 dark:text-emerald-400 text-xs uppercase tracking-wider">Margin (Admin only)</div>
+                  <div className="font-display font-bold text-xl text-emerald-700 dark:text-emerald-400">{fmtINR(data.profit_amount)}</div>
+                </div>
+              )}
               <div><div className="text-muted-foreground text-xs">Pickup</div><div>{fmtDate(data.pickup_at)}</div></div>
               <div><div className="text-muted-foreground text-xs">Delivered</div><div>{fmtDate(data.delivered_at)}</div></div>
             </div>
@@ -294,7 +343,10 @@ function OrderDetail({ id, onClose, onStatus, onBilty }: { id: string | null; on
                 ))}
               </div>
             </div>
-            <Button className="w-full" onClick={() => onBilty(data.id)}><FileText className="size-4 mr-1" /> {data.bilty_no ? `Print Bilty ${data.bilty_no}` : "Generate Bilty (LR)"}</Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={() => onBilty(data.id)}><FileText className="size-4 mr-1" /> {data.bilty_no ? `Bilty ${data.bilty_no}` : "Generate Bilty"}</Button>
+              <Button variant="outline" onClick={() => onInvoice(data.id)}><FileText className="size-4 mr-1" /> Tax Invoice</Button>
+            </div>
           </div>
         )}
       </SheetContent>
