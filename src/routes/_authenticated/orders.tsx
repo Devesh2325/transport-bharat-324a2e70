@@ -353,4 +353,3 @@ function OrderDetail({ id, isAdmin, onClose, onStatus, onBilty, onInvoice }: { i
     </Sheet>
   );
 }
-}
