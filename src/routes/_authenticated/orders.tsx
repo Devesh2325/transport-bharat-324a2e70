@@ -159,6 +159,31 @@ function OrdersPage() {
     load();
   };
 
+  const generateInvoice = async (id: string) => {
+    if (!company) return;
+    const { data: o } = await supabase.from("orders").select("*").eq("id", id).single();
+    if (!o) return;
+    const { data: existing } = await supabase.from("invoices").select("id").eq("order_id", id).maybeSingle();
+    if (existing) { window.open(`/invoices/${existing.id}`, "_blank"); return; }
+    const seq = await nextDocNo(company.id, "ORD" as never);
+    const invoice_no = seq.replace("ORD-", "INV-");
+    const sub = Number(o.freight_amount);
+    const { data: inv, error } = await supabase.from("invoices").insert({
+      company_id: company.id, invoice_no, order_id: id, party_id: o.party_id, party_gst_id: o.party_gst_id,
+      consignor_state: o.consignor_state, consignee_state: o.consignee_state,
+      subtotal: sub, cgst_amount: o.cgst_amount ?? 0, sgst_amount: o.sgst_amount ?? 0, igst_amount: o.igst_amount ?? 0,
+      total_amount: o.total_amount || sub, created_by: user?.id ?? null,
+    }).select("id").single();
+    if (error || !inv) return toast.error(error?.message ?? "Failed");
+    await supabase.from("invoice_items").insert({
+      company_id: company.id, invoice_id: inv.id,
+      description: `Freight ${o.from_city ?? ""} to ${o.to_city ?? ""} · ${o.material ?? ""}`,
+      qty: 1, unit: "Trip", rate: sub, amount: sub, gst_rate: o.gst_rate ?? 5,
+    });
+    toast.success(`Invoice ${invoice_no} generated`);
+    window.open(`/invoices/${inv.id}`, "_blank");
+  };
+
   const filtered = rows.filter(r => filter === "all" || r.status === filter);
   const base = Number(form.freight_amount || 0);
   const preview = calcGst(base, Number(form.gst_rate || 0), form.consignor_state, form.consignee_state);
