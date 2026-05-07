@@ -41,8 +41,12 @@ function PaymentsPage() {
       .select("id,amount,mode,reference,paid_at,direction,parties(name),orders(order_no)")
       .eq("company_id", company.id).order("paid_at", { ascending: false });
     setRows((data ?? []) as never as PRow[]);
-    const { data: ord } = await supabase.from("orders").select("id,order_no,party_id").eq("company_id", company.id);
-    setOrders(ord ?? []);
+    const [{ data: ord }, { data: inv }, { data: bk }] = await Promise.all([
+      supabase.from("orders").select("id,order_no,party_id").eq("company_id", company.id),
+      supabase.from("invoices").select("id,invoice_no,party_id").eq("company_id", company.id),
+      supabase.from("bank_accounts").select("id,name").eq("company_id", company.id).order("name"),
+    ]);
+    setOrders(ord ?? []); setInvoices(inv ?? []); setBanks(bk ?? []);
   };
   useEffect(() => { load(); }, [company?.id]);
 
@@ -51,6 +55,7 @@ function PaymentsPage() {
     const { error } = await supabase.from("payments").insert({
       company_id: company.id, direction: form.direction as never,
       party_id: form.party_id, order_id: form.order_id || null,
+      invoice_id: form.invoice_id || null, bank_account_id: form.bank_account_id || null,
       amount: Number(form.amount), mode: form.mode as never, reference: form.reference,
       paid_at: new Date(form.paid_at).toISOString(), created_by: user.id,
     });
