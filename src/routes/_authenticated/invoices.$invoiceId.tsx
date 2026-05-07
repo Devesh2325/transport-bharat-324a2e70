@@ -54,7 +54,7 @@ function InvoicePage() {
                 <div className="font-bold text-2xl">{company?.name}</div>
                 <div className="text-xs opacity-90 whitespace-pre-line">{(company as never as { address?: string })?.address ?? ""}</div>
                 <div className="text-xs opacity-90">{(company as never as { phone?: string })?.phone ?? ""} {(company as never as { email?: string })?.email ?? ""}</div>
-                {company?.gst_number && <div className="text-xs opacity-90">GSTIN: {company.gst_number}</div>}
+                {(company as never as { gst_number?: string })?.gst_number && <div className="text-xs opacity-90">GSTIN: {(company as never as { gst_number?: string })?.gst_number}</div>}
               </div>
             </div>
             <div className="text-right">
