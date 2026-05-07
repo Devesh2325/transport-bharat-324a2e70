@@ -23,12 +23,14 @@ interface PRow {
   direction: string; parties: { name: string } | null; orders: { order_no: string } | null;
 }
 
-const empty = { direction: "receivable" as "receivable" | "payable", party_id: null as string | null, order_id: "", amount: "", mode: "bank", reference: "", paid_at: new Date().toISOString().slice(0,10) };
+const empty = { direction: "receivable" as "receivable" | "payable", party_id: null as string | null, order_id: "", invoice_id: "", bank_account_id: "", amount: "", mode: "bank", reference: "", paid_at: new Date().toISOString().slice(0,10) };
 
 function PaymentsPage() {
   const { company, user } = useAuth();
   const [rows, setRows] = useState<PRow[]>([]);
   const [orders, setOrders] = useState<{ id: string; order_no: string; party_id: string | null }[]>([]);
+  const [invoices, setInvoices] = useState<{ id: string; invoice_no: string; party_id: string | null }[]>([]);
+  const [banks, setBanks] = useState<{ id: string; name: string }[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [tab, setTab] = useState<"receivable" | "payable">("receivable");
