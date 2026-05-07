@@ -323,7 +323,7 @@ function OrderDetail({ id, isAdmin, onClose, onStatus, onBilty, onInvoice }: { i
               <div><div className="text-muted-foreground text-xs">Vehicle</div><div>{data.vehicles?.number ?? "—"}</div></div>
               <div><div className="text-muted-foreground text-xs">Route</div><div>{data.from_city} → {data.to_city}</div></div>
               <div><div className="text-muted-foreground text-xs">Freight</div><div>{fmtINR(data.freight_amount)}</div></div>
-              <div><div className="text-muted-foreground text-xs">Transporter</div><div>{data.transporter_party?.name ?? "—"}</div></div>
+              <div><div className="text-muted-foreground text-xs">Transporter</div><div>{transporterName ?? "—"}</div></div>
               <div><div className="text-muted-foreground text-xs">Transporter cost</div><div>{fmtINR(data.transporter_amount)}</div></div>
               <div><div className="text-muted-foreground text-xs">CGST/SGST</div><div>{fmtINR((data.cgst_amount || 0) + (data.sgst_amount || 0))}</div></div>
               <div><div className="text-muted-foreground text-xs">IGST</div><div>{fmtINR(data.igst_amount)}</div></div>
