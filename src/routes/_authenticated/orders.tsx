@@ -295,15 +295,20 @@ function OrdersPage() {
   );
 }
 
-interface DetailRow extends Row { transporter_amount?: number | null; profit_amount?: number | null; transporter_party?: { name: string } | null }
+interface DetailRow extends Row { transporter_amount?: number | null; profit_amount?: number | null; transporter_party_id?: string | null }
 
 function OrderDetail({ id, isAdmin, onClose, onStatus, onBilty, onInvoice }: { id: string | null; isAdmin: boolean; onClose: () => void; onStatus: (id: string, s: string) => void; onBilty: (id: string) => void; onInvoice: (id: string) => void }) {
   const [data, setData] = useState<DetailRow | null>(null);
+  const [transporterName, setTransporterName] = useState<string | null>(null);
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const { data: d } = await supabase.from("orders").select("id,order_no,from_city,to_city,freight_amount,advance_amount,total_amount,status,bilty_no,pickup_at,delivered_at,created_at,cgst_amount,sgst_amount,igst_amount,transporter_amount,profit_amount,parties!orders_party_id_fkey(name),vehicles(number),transporter_party:parties!orders_transporter_party_id_fkey(name)").eq("id", id).maybeSingle();
+      const { data: d } = await supabase.from("orders").select("id,order_no,from_city,to_city,freight_amount,advance_amount,total_amount,status,bilty_no,pickup_at,delivered_at,created_at,cgst_amount,sgst_amount,igst_amount,transporter_amount,profit_amount,transporter_party_id,parties(name),vehicles(number)").eq("id", id).maybeSingle();
       setData(d as never as DetailRow);
+      if (d?.transporter_party_id) {
+        const { data: tp } = await supabase.from("parties").select("name").eq("id", d.transporter_party_id).maybeSingle();
+        setTransporterName(tp?.name ?? null);
+      } else setTransporterName(null);
     })();
   }, [id]);
   const STEPS = ["created","loaded","in_transit","delivered"];
