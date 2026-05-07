@@ -99,6 +99,23 @@ function PaymentsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div><Label>Invoice (optional)</Label>
+                  <Select value={form.invoice_id} onValueChange={v => setForm({ ...form, invoice_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Link an invoice" /></SelectTrigger>
+                    <SelectContent>
+                      {invoices.filter(i => !form.party_id || i.party_id === form.party_id).map(i => <SelectItem key={i.id} value={i.id}>{i.invoice_no}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Bank Account (for bank/UPI/cheque)</Label>
+                  <Select value={form.bank_account_id} onValueChange={v => setForm({ ...form, bank_account_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+                    <SelectContent>
+                      {banks.length === 0 && <div className="p-2 text-xs text-muted-foreground">Add bank in Master Data</div>}
+                      {banks.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Amount (₹)</Label><Input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} /></div>
                   <div><Label>Mode</Label>
