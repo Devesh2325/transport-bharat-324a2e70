@@ -23,12 +23,14 @@ interface PRow {
   direction: string; parties: { name: string } | null; orders: { order_no: string } | null;
 }
 
-const empty = { direction: "receivable" as "receivable" | "payable", party_id: null as string | null, order_id: "", amount: "", mode: "bank", reference: "", paid_at: new Date().toISOString().slice(0,10) };
+const empty = { direction: "receivable" as "receivable" | "payable", party_id: null as string | null, order_id: "", invoice_id: "", bank_account_id: "", amount: "", mode: "bank", reference: "", paid_at: new Date().toISOString().slice(0,10) };
 
 function PaymentsPage() {
   const { company, user } = useAuth();
   const [rows, setRows] = useState<PRow[]>([]);
   const [orders, setOrders] = useState<{ id: string; order_no: string; party_id: string | null }[]>([]);
+  const [invoices, setInvoices] = useState<{ id: string; invoice_no: string; party_id: string | null }[]>([]);
+  const [banks, setBanks] = useState<{ id: string; name: string }[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [tab, setTab] = useState<"receivable" | "payable">("receivable");
@@ -39,8 +41,12 @@ function PaymentsPage() {
       .select("id,amount,mode,reference,paid_at,direction,parties(name),orders(order_no)")
       .eq("company_id", company.id).order("paid_at", { ascending: false });
     setRows((data ?? []) as never as PRow[]);
-    const { data: ord } = await supabase.from("orders").select("id,order_no,party_id").eq("company_id", company.id);
-    setOrders(ord ?? []);
+    const [{ data: ord }, { data: inv }, { data: bk }] = await Promise.all([
+      supabase.from("orders").select("id,order_no,party_id").eq("company_id", company.id),
+      supabase.from("invoices").select("id,invoice_no,party_id").eq("company_id", company.id),
+      supabase.from("bank_accounts").select("id,name").eq("company_id", company.id).order("name"),
+    ]);
+    setOrders(ord ?? []); setInvoices(inv ?? []); setBanks(bk ?? []);
   };
   useEffect(() => { load(); }, [company?.id]);
 
@@ -49,6 +55,7 @@ function PaymentsPage() {
     const { error } = await supabase.from("payments").insert({
       company_id: company.id, direction: form.direction as never,
       party_id: form.party_id, order_id: form.order_id || null,
+      invoice_id: form.invoice_id || null, bank_account_id: form.bank_account_id || null,
       amount: Number(form.amount), mode: form.mode as never, reference: form.reference,
       paid_at: new Date(form.paid_at).toISOString(), created_by: user.id,
     });
@@ -89,6 +96,23 @@ function PaymentsPage() {
                     <SelectTrigger><SelectValue placeholder="Link an order" /></SelectTrigger>
                     <SelectContent>
                       {orders.filter(o => !form.party_id || o.party_id === form.party_id).map(o => <SelectItem key={o.id} value={o.id}>{o.order_no}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Invoice (optional)</Label>
+                  <Select value={form.invoice_id} onValueChange={v => setForm({ ...form, invoice_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Link an invoice" /></SelectTrigger>
+                    <SelectContent>
+                      {invoices.filter(i => !form.party_id || i.party_id === form.party_id).map(i => <SelectItem key={i.id} value={i.id}>{i.invoice_no}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Bank Account (for bank/UPI/cheque)</Label>
+                  <Select value={form.bank_account_id} onValueChange={v => setForm({ ...form, bank_account_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+                    <SelectContent>
+                      {banks.length === 0 && <div className="p-2 text-xs text-muted-foreground">Add bank in Master Data</div>}
+                      {banks.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
