@@ -81,23 +81,40 @@ function PartiesTab() {
       <div className="flex justify-end">
         <Dialog open={newOpen} onOpenChange={setNewOpen}>
           <DialogTrigger asChild><Button><Plus className="size-4 mr-1" /> New Party</Button></DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>New Party</DialogTitle></DialogHeader>
             <div className="grid gap-3">
-              <div><Label>Name</Label><Input value={newP.name} onChange={e => setNewP({ ...newP, name: e.target.value })} /></div>
-              <div><Label>Type</Label>
-                <Select value={newP.type} onValueChange={v => setNewP({ ...newP, type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["client","consignor","consignee","transporter"].map(t => <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Name *</Label><Input value={newP.name} onChange={e => setNewP({ ...newP, name: e.target.value })} /></div>
+                <div><Label>Type</Label>
+                  <Select value={newP.type} onValueChange={v => setNewP({ ...newP, type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["client","consignor","consignee","transporter"].map(t => <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
+                <div><Label>Contact person</Label><Input value={newP.contact_person} onChange={e => setNewP({ ...newP, contact_person: e.target.value })} /></div>
                 <div><Label>Phone</Label><Input value={newP.phone} onChange={e => setNewP({ ...newP, phone: e.target.value })} /></div>
-                <div><Label>Email</Label><Input value={newP.email} onChange={e => setNewP({ ...newP, email: e.target.value })} /></div>
               </div>
-              <div><Label>City</Label><Input value={newP.city} onChange={e => setNewP({ ...newP, city: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Email</Label><Input value={newP.email} onChange={e => setNewP({ ...newP, email: e.target.value })} /></div>
+                <div><Label>PAN</Label><Input value={newP.pan} onChange={e => setNewP({ ...newP, pan: e.target.value })} placeholder="ABCDE1234F" /></div>
+              </div>
+              <div><Label>Address</Label><Input value={newP.address} onChange={e => setNewP({ ...newP, address: e.target.value })} /></div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>City</Label><Input value={newP.city} onChange={e => setNewP({ ...newP, city: e.target.value })} /></div>
+                <div><Label>State</Label><StateSelect value={newP.state} onChange={v => setNewP({ ...newP, state: v })} /></div>
+                <div><Label>Credit limit (₹)</Label><Input type="number" value={newP.credit_limit} onChange={e => setNewP({ ...newP, credit_limit: e.target.value })} /></div>
+              </div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2">Bank details</div>
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label>Bank name</Label><Input value={newP.bank_name} onChange={e => setNewP({ ...newP, bank_name: e.target.value })} /></div>
+                <div><Label>Account no.</Label><Input value={newP.bank_account_no} onChange={e => setNewP({ ...newP, bank_account_no: e.target.value })} /></div>
+                <div><Label>IFSC</Label><Input value={newP.bank_ifsc} onChange={e => setNewP({ ...newP, bank_ifsc: e.target.value })} /></div>
+              </div>
             </div>
             <DialogFooter><Button onClick={createParty}>Create</Button></DialogFooter>
           </DialogContent>
