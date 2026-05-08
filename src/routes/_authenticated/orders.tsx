@@ -181,7 +181,7 @@ function OrdersPage() {
       qty: 1, unit: "Trip", rate: sub, amount: sub, gst_rate: o.gst_rate ?? 5,
     });
     toast.success(`Invoice ${invoice_no} generated`);
-    window.open(`/invoices/${inv.id}`, "_blank");
+    navigate({ to: "/invoices/$invoiceId", params: { invoiceId: inv.id } });
   };
 
   const filtered = rows.filter(r => filter === "all" || r.status === filter);
