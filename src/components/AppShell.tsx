@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-const NAV = [
+const NAV_FULL = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/inquiries", label: "Inquiries", icon: Inbox },
   { to: "/orders", label: "Orders", icon: ClipboardList },
@@ -15,6 +15,11 @@ const NAV = [
   { to: "/masters", label: "Master Data", icon: Database },
   { to: "/reports", label: "Reports", icon: BarChart3 },
   { to: "/users", label: "Users", icon: Users },
+  { to: "/settings", label: "Settings", icon: Settings },
+];
+
+const NAV_TRANSPORTER = [
+  { to: "/transporter", label: "My Loads", icon: Truck },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
