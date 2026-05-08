@@ -155,7 +155,7 @@ function OrdersPage() {
       const bilty_no = await nextDocNo(company.id, "BLT");
       await supabase.from("orders").update({ bilty_no }).eq("id", id);
     }
-    window.open(`/orders/${id}/bilty`, "_blank");
+    navigate({ to: "/orders/$orderId/bilty", params: { orderId: id } });
     load();
   };
 
