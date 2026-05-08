@@ -30,6 +30,8 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
   const isSuper = roles.includes("super_admin");
   const initials = (profile?.full_name || profile?.email || "U").split(" ").map(s => s[0]).join("").slice(0, 2).toUpperCase();
   const planName = company?.plan?.name ?? "Free";
+  const isTransporterOnly = roles.length > 0 && roles.every(r => r === "transporter");
+  const NAV = isTransporterOnly ? NAV_TRANSPORTER : NAV_FULL;
 
   return (
     <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground">
