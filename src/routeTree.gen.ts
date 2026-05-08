@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
+import { Route as AuthenticatedTransporterRouteImport } from './routes/_authenticated/transporter'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
@@ -53,6 +54,12 @@ const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedTransporterRoute =
+  AuthenticatedTransporterRouteImport.update({
+    id: '/transporter',
+    path: '/transporter',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -141,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/transporter': typeof AuthenticatedTransporterRoute
   '/users': typeof AuthenticatedUsersRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
@@ -161,6 +169,7 @@ export interface FileRoutesByTo {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/transporter': typeof AuthenticatedTransporterRoute
   '/users': typeof AuthenticatedUsersRoute
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
@@ -183,6 +192,7 @@ export interface FileRoutesById {
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/transporter': typeof AuthenticatedTransporterRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/reports'
     | '/settings'
+    | '/transporter'
     | '/users'
     | '/admin/companies'
     | '/admin/plans'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/reports'
     | '/settings'
+    | '/transporter'
     | '/users'
     | '/admin/companies'
     | '/admin/plans'
@@ -246,6 +258,7 @@ export interface FileRouteTypes {
     | '/_authenticated/payments'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
+    | '/_authenticated/transporter'
     | '/_authenticated/users'
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/plans'
@@ -295,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users'
       preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/transporter': {
+      id: '/_authenticated/transporter'
+      path: '/transporter'
+      fullPath: '/transporter'
+      preLoaderRoute: typeof AuthenticatedTransporterRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings': {
@@ -446,6 +466,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTransporterRoute: typeof AuthenticatedTransporterRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
 }
 
@@ -460,6 +481,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTransporterRoute: AuthenticatedTransporterRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
 }
 
