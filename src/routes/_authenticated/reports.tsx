@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { PageHeader } from "@/components/PageHeader";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fmtINR } from "@/lib/queries";
+import { fmtINR, exportXLSX, exportPDF } from "@/lib/queries";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell, PieChart, Pie, Legend } from "recharts";
+import { Button } from "@/components/ui/button";
+import { Download, FileSpreadsheet, FileText } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/reports")({ component: ReportsPage });
 
