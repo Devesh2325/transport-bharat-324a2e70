@@ -48,7 +48,7 @@ function PartiesTab() {
   const [gsts, setGsts] = useState<Gst[]>([]);
   const [open, setOpen] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState(false);
-  const [newP, setNewP] = useState({ name: "", type: "client", phone: "", email: "", city: "" });
+  const [newP, setNewP] = useState({ name: "", type: "client", phone: "", email: "", city: "", state: "", address: "", pan: "", contact_person: "", credit_limit: "", bank_name: "", bank_account_no: "", bank_ifsc: "" });
 
   const load = async () => {
     if (!company) return;
