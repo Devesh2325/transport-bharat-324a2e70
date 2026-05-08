@@ -48,8 +48,24 @@ function AuthLayout() {
     );
   }
 
+  const daysLeft = (() => {
+    if (!company || isSuper) return null;
+    const target = company.status === "trial" ? company.trial_ends_at : company.plan_expires_at;
+    if (!target) return null;
+    return Math.ceil((new Date(target).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  })();
+  const showExpiryWarning = daysLeft !== null && daysLeft >= 0 && daysLeft <= 7;
+
   return (
     <AppShell>
+      {showExpiryWarning && (
+        <div className="px-6 pt-4">
+          <div className="rounded-lg border border-warning/40 bg-warning/10 text-warning px-4 py-2.5 text-sm flex items-center gap-2">
+            <AlertTriangle className="size-4" />
+            Your {company?.status === "trial" ? "trial" : "plan"} expires in {daysLeft} day{daysLeft === 1 ? "" : "s"}. Contact your admin to renew.
+          </div>
+        </div>
+      )}
       <Outlet />
     </AppShell>
   );

@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-const NAV = [
+const NAV_FULL = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/inquiries", label: "Inquiries", icon: Inbox },
   { to: "/orders", label: "Orders", icon: ClipboardList },
@@ -18,6 +18,11 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
+const NAV_TRANSPORTER = [
+  { to: "/transporter", label: "My Loads", icon: Truck },
+  { to: "/settings", label: "Settings", icon: Settings },
+];
+
 function SidebarContent({ onNav }: { onNav?: () => void }) {
   const { profile, company, roles, signOut } = useAuth();
   const navigate = useNavigate();
@@ -25,6 +30,8 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
   const isSuper = roles.includes("super_admin");
   const initials = (profile?.full_name || profile?.email || "U").split(" ").map(s => s[0]).join("").slice(0, 2).toUpperCase();
   const planName = company?.plan?.name ?? "Free";
+  const isTransporterOnly = roles.length > 0 && roles.every(r => r === "transporter");
+  const NAV = isTransporterOnly ? NAV_TRANSPORTER : NAV_FULL;
 
   return (
     <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground">
