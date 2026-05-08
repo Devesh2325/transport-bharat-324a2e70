@@ -38,7 +38,19 @@ function ReportsPage() {
 
   return (
     <div>
-      <PageHeader title="Reports" subtitle="Revenue, outstanding, and operational analytics." />
+      <PageHeader title="Reports" subtitle="Revenue, outstanding, and operational analytics." actions={<>
+        <Button variant="outline" size="sm" onClick={() => exportXLSX(`reports-${new Date().toISOString().slice(0,10)}`, [
+          { name: "Revenue by month", rows: months as unknown as Record<string, unknown>[] },
+          { name: "Party outstanding", rows: outst as unknown as Record<string, unknown>[] },
+          { name: "Status mix", rows: statusMix as unknown as Record<string, unknown>[] },
+        ])}><FileSpreadsheet className="size-4 mr-1" /> Excel</Button>
+        <Button variant="outline" size="sm" onClick={() => exportPDF(
+          `outstanding-${new Date().toISOString().slice(0,10)}`,
+          "Party-wise Outstanding",
+          ["Party","Billed","Received","Outstanding"],
+          outst.map(r => [r.party_name, fmtINR(r.billed), fmtINR(r.received), fmtINR(r.outstanding)]),
+        )}><FileText className="size-4 mr-1" /> PDF</Button>
+      </>} />
       <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl border bg-card p-5">
           <h3 className="font-display font-semibold mb-4">Revenue & cash flow by month</h3>
