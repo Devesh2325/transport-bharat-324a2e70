@@ -155,7 +155,7 @@ function OrdersPage() {
       const bilty_no = await nextDocNo(company.id, "BLT");
       await supabase.from("orders").update({ bilty_no }).eq("id", id);
     }
-    window.open(`/orders/${id}/bilty`, "_blank");
+    navigate({ to: "/orders/$orderId/bilty", params: { orderId: id } });
     load();
   };
 
@@ -164,7 +164,7 @@ function OrdersPage() {
     const { data: o } = await supabase.from("orders").select("*").eq("id", id).single();
     if (!o) return;
     const { data: existing } = await supabase.from("invoices").select("id").eq("order_id", id).maybeSingle();
-    if (existing) { window.open(`/invoices/${existing.id}`, "_blank"); return; }
+    if (existing) { navigate({ to: "/invoices/$invoiceId", params: { invoiceId: existing.id } }); return; }
     const seq = await nextDocNo(company.id, "ORD" as never);
     const invoice_no = seq.replace("ORD-", "INV-");
     const sub = Number(o.freight_amount);
@@ -181,7 +181,7 @@ function OrdersPage() {
       qty: 1, unit: "Trip", rate: sub, amount: sub, gst_rate: o.gst_rate ?? 5,
     });
     toast.success(`Invoice ${invoice_no} generated`);
-    window.open(`/invoices/${inv.id}`, "_blank");
+    navigate({ to: "/invoices/$invoiceId", params: { invoiceId: inv.id } });
   };
 
   const filtered = rows.filter(r => filter === "all" || r.status === filter);
