@@ -38,3 +38,24 @@ export function amountInWords(num: number): string {
   if (rest) s += below1000(rest);
   return s.trim() + " Rupees Only";
 }
+
+export async function exportXLSX(filename: string, sheets: { name: string; rows: Record<string, unknown>[] }[]) {
+  const XLSX = await import("xlsx");
+  const wb = XLSX.utils.book_new();
+  for (const s of sheets) {
+    const ws = XLSX.utils.json_to_sheet(s.rows);
+    XLSX.utils.book_append_sheet(wb, ws, s.name.slice(0, 31));
+  }
+  XLSX.writeFile(wb, filename.endsWith(".xlsx") ? filename : `${filename}.xlsx`);
+}
+
+export async function exportPDF(filename: string, title: string, columns: string[], rows: (string | number)[][]) {
+  const { default: jsPDF } = await import("jspdf");
+  const auto = (await import("jspdf-autotable")).default;
+  const doc = new jsPDF();
+  doc.setFontSize(14); doc.text(title, 14, 16);
+  doc.setFontSize(9); doc.text(new Date().toLocaleString("en-IN"), 14, 22);
+  auto(doc, { startY: 28, head: [columns], body: rows, styles: { fontSize: 9 }, headStyles: { fillColor: [99, 102, 241] } });
+  doc.save(filename.endsWith(".pdf") ? filename : `${filename}.pdf`);
+}
+
