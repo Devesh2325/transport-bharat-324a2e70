@@ -164,7 +164,7 @@ function OrdersPage() {
     const { data: o } = await supabase.from("orders").select("*").eq("id", id).single();
     if (!o) return;
     const { data: existing } = await supabase.from("invoices").select("id").eq("order_id", id).maybeSingle();
-    if (existing) { window.open(`/invoices/${existing.id}`, "_blank"); return; }
+    if (existing) { navigate({ to: "/invoices/$invoiceId", params: { invoiceId: existing.id } }); return; }
     const seq = await nextDocNo(company.id, "ORD" as never);
     const invoice_no = seq.replace("ORD-", "INV-");
     const sub = Number(o.freight_amount);
