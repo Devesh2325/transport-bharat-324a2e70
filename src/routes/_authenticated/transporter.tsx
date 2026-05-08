@@ -109,7 +109,7 @@ function TransporterPortal() {
                   <TableCell>{o.from_city ?? "—"} → {o.to_city ?? "—"}</TableCell>
                   <TableCell className="font-mono text-xs">{o.vehicles?.number ?? "—"}</TableCell>
                   <TableCell>{fmtDate(o.pickup_at)}</TableCell>
-                  <TableCell><StatusBadge status={o.status} /></TableCell>
+                  <TableCell><StatusBadge value={o.status} /></TableCell>
                   <TableCell className="text-right font-semibold">{fmtINR(o.transporter_amount)}</TableCell>
                 </TableRow>
               ))}
