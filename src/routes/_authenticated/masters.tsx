@@ -62,9 +62,18 @@ function PartiesTab() {
 
   const createParty = async () => {
     if (!company || !newP.name.trim()) return;
-    const { error } = await supabase.from("parties").insert({ ...newP, company_id: company.id, type: newP.type as never });
+    const { error } = await supabase.from("parties").insert({
+      company_id: company.id,
+      name: newP.name, type: newP.type as never,
+      phone: newP.phone, email: newP.email, city: newP.city, state: newP.state, address: newP.address,
+      pan: newP.pan ? newP.pan.toUpperCase() : null, contact_person: newP.contact_person,
+      credit_limit: Number(newP.credit_limit || 0),
+      bank_name: newP.bank_name, bank_account_no: newP.bank_account_no, bank_ifsc: newP.bank_ifsc ? newP.bank_ifsc.toUpperCase() : null,
+    });
     if (error) return toast.error(error.message);
-    setNewOpen(false); setNewP({ name: "", type: "client", phone: "", email: "", city: "" }); load();
+    setNewOpen(false);
+    setNewP({ name: "", type: "client", phone: "", email: "", city: "", state: "", address: "", pan: "", contact_person: "", credit_limit: "", bank_name: "", bank_account_no: "", bank_ifsc: "" });
+    load();
   };
 
   return (
