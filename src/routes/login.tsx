@@ -19,9 +19,21 @@ function LoginPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setLoading(false); toast.error(error.message); return; }
+    // Ensure the session is fully persisted before the route guard reads it.
+    if (data.session) {
+      await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      });
+    }
+    for (let i = 0; i < 10; i++) {
+      const { data: s } = await supabase.auth.getSession();
+      if (s.session) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
     toast.success("Welcome back");
     navigate({ to: "/dashboard" });
   };
