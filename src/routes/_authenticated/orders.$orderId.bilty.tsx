@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fmtINR, fmtDate } from "@/lib/queries";
-import { Printer, Pencil } from "lucide-react";
+import { fmtINR, fmtDate, downloadElementAsPDF } from "@/lib/queries";
+import { Printer, Pencil, Download } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/orders/$orderId/bilty")({ component: BiltyPage });
