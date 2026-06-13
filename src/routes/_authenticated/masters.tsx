@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StateSelect } from "@/components/StateSelect";
-import { Plus, Building2, Package, Truck, Landmark, ChevronRight, Trash2, Star, StarOff } from "lucide-react";
+import { Plus, Building2, Package, Truck, Landmark, ChevronRight, Trash2, Star, StarOff, Phone, Mail, CreditCard, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { fmtINR } from "@/lib/queries";
 
