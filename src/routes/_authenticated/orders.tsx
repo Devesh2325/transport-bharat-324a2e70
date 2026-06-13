@@ -155,8 +155,8 @@ function OrdersPage() {
       const bilty_no = await nextDocNo(company.id, "BLT");
       await supabase.from("orders").update({ bilty_no }).eq("id", id);
     }
-    navigate({ to: "/orders/$orderId/bilty", params: { orderId: id } });
-    load();
+    setDetailId(null);
+    await navigate({ to: "/orders/$orderId/bilty", params: { orderId: id } });
   };
 
   const generateInvoice = async (id: string) => {
