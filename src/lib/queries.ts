@@ -59,3 +59,29 @@ export async function exportPDF(filename: string, title: string, columns: string
   doc.save(filename.endsWith(".pdf") ? filename : `${filename}.pdf`);
 }
 
+
+export async function downloadElementAsPDF(elementId: string, filename: string) {
+  const el = document.getElementById(elementId);
+  if (!el) throw new Error("Element not found: " + elementId);
+  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf"),
+  ]);
+  const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false });
+  const img = canvas.toDataURL("image/png");
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pageW = 210, pageH = 297, margin = 8;
+  const imgW = pageW - margin * 2;
+  const imgH = (canvas.height * imgW) / canvas.width;
+  let heightLeft = imgH;
+  let position = margin;
+  pdf.addImage(img, "PNG", margin, position, imgW, imgH);
+  heightLeft -= pageH - margin * 2;
+  while (heightLeft > 0) {
+    pdf.addPage();
+    position = margin - (imgH - heightLeft);
+    pdf.addImage(img, "PNG", margin, position, imgW, imgH);
+    heightLeft -= pageH - margin * 2;
+  }
+  pdf.save(filename.endsWith(".pdf") ? filename : `${filename}.pdf`);
+}
