@@ -161,10 +161,11 @@ function OrdersPage() {
 
   const generateInvoice = async (id: string) => {
     if (!company) return;
+    setDetailId(null);
     const { data: o } = await supabase.from("orders").select("*").eq("id", id).single();
     if (!o) return;
     const { data: existing } = await supabase.from("invoices").select("id").eq("order_id", id).maybeSingle();
-    if (existing) { navigate({ to: "/invoices/$invoiceId", params: { invoiceId: existing.id } }); return; }
+    if (existing) { await navigate({ to: "/invoices/$invoiceId", params: { invoiceId: existing.id } }); return; }
     const seq = await nextDocNo(company.id, "ORD" as never);
     const invoice_no = seq.replace("ORD-", "INV-");
     const sub = Number(o.freight_amount);
@@ -181,7 +182,7 @@ function OrdersPage() {
       qty: 1, unit: "Trip", rate: sub, amount: sub, gst_rate: o.gst_rate ?? 5,
     });
     toast.success(`Invoice ${invoice_no} generated`);
-    navigate({ to: "/invoices/$invoiceId", params: { invoiceId: inv.id } });
+    await navigate({ to: "/invoices/$invoiceId", params: { invoiceId: inv.id } });
   };
 
   const filtered = rows.filter(r => filter === "all" || r.status === filter);
