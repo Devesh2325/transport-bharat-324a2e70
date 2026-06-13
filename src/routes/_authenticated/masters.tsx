@@ -453,6 +453,7 @@ function TransportersTab() {
       agg.set(o.transporter_party_id, a);
     });
     (pays ?? []).forEach(p => {
+      if (!p.party_id) return;
       const a = agg.get(p.party_id) ?? { billed: 0, advance: 0, paid: 0, trips: 0 };
       a.paid += Number(p.amount || 0);
       agg.set(p.party_id, a);
