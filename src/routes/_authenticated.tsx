@@ -7,8 +7,14 @@ import { AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/login" });
+    // Retry briefly — Supabase may still be hydrating the session from storage
+    // right after login or a tab restore, causing a false redirect to /login.
+    for (let i = 0; i < 10; i++) {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) return;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    throw redirect({ to: "/login" });
   },
   component: AuthLayout,
 });

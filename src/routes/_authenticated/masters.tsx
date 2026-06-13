@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StateSelect } from "@/components/StateSelect";
-import { Plus, Building2, Package, Truck, Landmark, ChevronRight, Trash2, Star, StarOff } from "lucide-react";
+import { Plus, Building2, Package, Truck, Landmark, ChevronRight, Trash2, Star, StarOff, Phone, Mail, CreditCard, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { fmtINR } from "@/lib/queries";
 
@@ -25,11 +25,13 @@ function MastersPage() {
         <Tabs defaultValue="parties">
           <TabsList>
             <TabsTrigger value="parties"><Building2 className="size-4 mr-1" /> Parties & GST</TabsTrigger>
+            <TabsTrigger value="transporters"><Truck className="size-4 mr-1" /> Transporters & Payments</TabsTrigger>
             <TabsTrigger value="products"><Package className="size-4 mr-1" /> Products</TabsTrigger>
             <TabsTrigger value="vehicles"><Truck className="size-4 mr-1" /> Vehicles</TabsTrigger>
             <TabsTrigger value="banks"><Landmark className="size-4 mr-1" /> Bank Accounts</TabsTrigger>
           </TabsList>
           <TabsContent value="parties" className="mt-4"><PartiesTab /></TabsContent>
+          <TabsContent value="transporters" className="mt-4"><TransportersTab /></TabsContent>
           <TabsContent value="products" className="mt-4"><ProductsTab /></TabsContent>
           <TabsContent value="vehicles" className="mt-4"><VehiclesTab /></TabsContent>
           <TabsContent value="banks" className="mt-4"><BanksTab /></TabsContent>
@@ -411,6 +413,209 @@ function BanksTab() {
           </TableBody>
         </Table>
       </div>
+    </div>
+  );
+}
+
+interface TransporterRow {
+  id: string; name: string; phone: string | null; email: string | null; city: string | null;
+  contact_person: string | null; bank_name: string | null; bank_account_no: string | null; bank_ifsc: string | null;
+  billed: number; advance: number; paid: number; pending: number; trips: number;
+}
+
+function TransportersTab() {
+  const { company } = useAuth();
+  const [rows, setRows] = useState<TransporterRow[]>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [history, setHistory] = useState<{ order_no: string; from_city: string | null; to_city: string | null; transporter_amount: number; advance_amount: number; created_at: string; status: string }[]>([]);
+  const [payments, setPayments] = useState<{ paid_at: string; amount: number; mode: string; reference: string | null }[]>([]);
+
+  const load = async () => {
+    if (!company) return;
+    const { data: parties } = await supabase
+      .from("parties")
+      .select("id,name,phone,email,city,contact_person,bank_name,bank_account_no,bank_ifsc")
+      .eq("company_id", company.id).eq("type", "transporter").order("name");
+    const list = (parties ?? []) as Omit<TransporterRow, "billed" | "advance" | "paid" | "pending" | "trips">[];
+    const ids = list.map(p => p.id);
+    if (ids.length === 0) { setRows([]); return; }
+    const [{ data: orders }, { data: pays }] = await Promise.all([
+      supabase.from("orders").select("transporter_party_id,transporter_amount,advance_amount").eq("company_id", company.id).in("transporter_party_id", ids),
+      supabase.from("payments").select("party_id,amount").eq("company_id", company.id).eq("direction", "payable").in("party_id", ids),
+    ]);
+    const agg = new Map<string, { billed: number; advance: number; paid: number; trips: number }>();
+    (orders ?? []).forEach(o => {
+      if (!o.transporter_party_id) return;
+      const a = agg.get(o.transporter_party_id) ?? { billed: 0, advance: 0, paid: 0, trips: 0 };
+      a.billed += Number(o.transporter_amount || 0);
+      a.advance += Number(o.advance_amount || 0);
+      a.trips += 1;
+      agg.set(o.transporter_party_id, a);
+    });
+    (pays ?? []).forEach(p => {
+      const a = agg.get(p.party_id) ?? { billed: 0, advance: 0, paid: 0, trips: 0 };
+      a.paid += Number(p.amount || 0);
+      agg.set(p.party_id, a);
+    });
+    setRows(list.map(p => {
+      const a = agg.get(p.id) ?? { billed: 0, advance: 0, paid: 0, trips: 0 };
+      return { ...p, billed: a.billed, advance: a.advance, paid: a.paid, trips: a.trips, pending: a.billed - a.advance - a.paid };
+    }));
+  };
+  useEffect(() => { load(); }, [company?.id]);
+
+  const openTransporter = async (id: string) => {
+    if (!company) return;
+    setOpenId(id);
+    const [{ data: ords }, { data: pays }] = await Promise.all([
+      supabase.from("orders").select("order_no,from_city,to_city,transporter_amount,advance_amount,created_at,status").eq("company_id", company.id).eq("transporter_party_id", id).order("created_at", { ascending: false }),
+      supabase.from("payments").select("paid_at,amount,mode,reference").eq("company_id", company.id).eq("party_id", id).eq("direction", "payable").order("paid_at", { ascending: false }),
+    ]);
+    setHistory((ords ?? []) as never);
+    setPayments((pays ?? []) as never);
+  };
+
+  const totals = rows.reduce((s, r) => ({ billed: s.billed + r.billed, advance: s.advance + r.advance, paid: s.paid + r.paid, pending: s.pending + r.pending }), { billed: 0, advance: 0, paid: 0, pending: 0 });
+  const current = rows.find(r => r.id === openId) ?? null;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <SummaryCard label="Total billed" value={fmtINR(totals.billed)} tone="indigo" />
+        <SummaryCard label="Advance paid" value={fmtINR(totals.advance)} tone="amber" />
+        <SummaryCard label="Settled" value={fmtINR(totals.paid)} tone="emerald" />
+        <SummaryCard label="Pending balance" value={fmtINR(totals.pending)} tone="rose" />
+      </div>
+
+      <div className="rounded-xl border bg-card overflow-hidden">
+        <Table>
+          <TableHeader><TableRow>
+            <TableHead>Transporter</TableHead><TableHead>Contact</TableHead><TableHead className="text-right">Trips</TableHead>
+            <TableHead className="text-right">Billed</TableHead><TableHead className="text-right">Advance</TableHead>
+            <TableHead className="text-right">Paid</TableHead><TableHead className="text-right">Pending</TableHead><TableHead></TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {rows.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-10">No transporters yet. Add a party with type “transporter”.</TableCell></TableRow>}
+            {rows.map(r => (
+              <TableRow key={r.id} className="cursor-pointer hover:bg-muted/40" onClick={() => openTransporter(r.id)}>
+                <TableCell>
+                  <div className="font-medium">{r.name}</div>
+                  <div className="text-xs text-muted-foreground">{r.city ?? "—"}{r.contact_person ? ` · ${r.contact_person}` : ""}</div>
+                </TableCell>
+                <TableCell className="text-xs">
+                  {r.phone && <div className="flex items-center gap-1"><Phone className="size-3" />{r.phone}</div>}
+                  {r.email && <div className="flex items-center gap-1 text-muted-foreground"><Mail className="size-3" />{r.email}</div>}
+                </TableCell>
+                <TableCell className="text-right">{r.trips}</TableCell>
+                <TableCell className="text-right">{fmtINR(r.billed)}</TableCell>
+                <TableCell className="text-right text-amber-700 dark:text-amber-400">{fmtINR(r.advance)}</TableCell>
+                <TableCell className="text-right text-emerald-700 dark:text-emerald-400">{fmtINR(r.paid)}</TableCell>
+                <TableCell className={`text-right font-semibold ${r.pending > 0 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground"}`}>{fmtINR(r.pending)}</TableCell>
+                <TableCell><Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openTransporter(r.id); }}>Details</Button></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={!!openId} onOpenChange={(o) => !o && setOpenId(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{current?.name ?? "Transporter"}</DialogTitle></DialogHeader>
+          {current && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <MiniStat label="Billed" value={fmtINR(current.billed)} />
+                <MiniStat label="Advance" value={fmtINR(current.advance)} tone="amber" />
+                <MiniStat label="Paid" value={fmtINR(current.paid)} tone="emerald" />
+                <MiniStat label="Pending" value={fmtINR(current.pending)} tone={current.pending > 0 ? "rose" : "muted"} />
+              </div>
+
+              <div className="rounded-lg border p-3 text-sm grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+                <div className="flex items-center gap-2"><Phone className="size-3 text-muted-foreground" /> {current.phone ?? "—"}</div>
+                <div className="flex items-center gap-2"><Mail className="size-3 text-muted-foreground" /> {current.email ?? "—"}</div>
+                <div className="flex items-center gap-2"><Banknote className="size-3 text-muted-foreground" /> {current.bank_name ?? "—"}</div>
+                <div className="flex items-center gap-2"><CreditCard className="size-3 text-muted-foreground" /> {current.bank_account_no ?? "—"} {current.bank_ifsc ? `· ${current.bank_ifsc}` : ""}</div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Trip history</div>
+                <div className="rounded-lg border overflow-hidden">
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead>Order</TableHead><TableHead>Route</TableHead><TableHead>Status</TableHead>
+                      <TableHead className="text-right">Freight</TableHead><TableHead className="text-right">Advance</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {history.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6 text-sm">No trips yet.</TableCell></TableRow>}
+                      {history.map((h, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-mono text-xs">{h.order_no}</TableCell>
+                          <TableCell className="text-xs">{h.from_city} → {h.to_city}</TableCell>
+                          <TableCell className="capitalize text-xs">{h.status.replace("_", " ")}</TableCell>
+                          <TableCell className="text-right">{fmtINR(h.transporter_amount)}</TableCell>
+                          <TableCell className="text-right text-amber-700 dark:text-amber-400">{fmtINR(h.advance_amount)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Payment history</div>
+                <div className="rounded-lg border overflow-hidden">
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead>Date</TableHead><TableHead>Mode</TableHead><TableHead>Reference</TableHead><TableHead className="text-right">Amount</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {payments.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6 text-sm">No payments recorded.</TableCell></TableRow>}
+                      {payments.map((p, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="text-xs">{new Date(p.paid_at).toLocaleDateString("en-IN")}</TableCell>
+                          <TableCell className="capitalize text-xs">{p.mode}</TableCell>
+                          <TableCell className="font-mono text-xs">{p.reference ?? "—"}</TableCell>
+                          <TableCell className="text-right text-emerald-700 dark:text-emerald-400">{fmtINR(p.amount)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function SummaryCard({ label, value, tone }: { label: string; value: string; tone: "indigo" | "amber" | "emerald" | "rose" }) {
+  const tones = {
+    indigo: "from-indigo-500/10 to-indigo-500/0 text-indigo-700 dark:text-indigo-400",
+    amber: "from-amber-500/10 to-amber-500/0 text-amber-700 dark:text-amber-400",
+    emerald: "from-emerald-500/10 to-emerald-500/0 text-emerald-700 dark:text-emerald-400",
+    rose: "from-rose-500/10 to-rose-500/0 text-rose-700 dark:text-rose-400",
+  };
+  return (
+    <div className={`rounded-xl border bg-gradient-to-br ${tones[tone]} p-4`}>
+      <div className="text-xs uppercase tracking-wider opacity-80">{label}</div>
+      <div className="mt-1 text-xl font-display font-bold text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, tone = "muted" }: { label: string; value: string; tone?: "muted" | "amber" | "emerald" | "rose" }) {
+  const colors = {
+    muted: "text-foreground",
+    amber: "text-amber-700 dark:text-amber-400",
+    emerald: "text-emerald-700 dark:text-emerald-400",
+    rose: "text-rose-600 dark:text-rose-400",
+  };
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`mt-1 font-semibold ${colors[tone]}`}>{value}</div>
     </div>
   );
 }
