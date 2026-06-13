@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { fmtINR, fmtDate, amountInWords } from "@/lib/queries";
-import { Printer } from "lucide-react";
+import { fmtINR, fmtDate, amountInWords, downloadElementAsPDF } from "@/lib/queries";
+import { Printer, Download } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/invoices/$invoiceId")({ component: InvoicePage });
 
@@ -43,9 +44,12 @@ function InvoicePage() {
     <div className="min-h-screen bg-white text-black p-6 print:p-0">
       <div className="max-w-4xl mx-auto bg-white">
         <div className="flex justify-end mb-3 print:hidden gap-2">
-          <Button onClick={() => window.print()}><Printer className="size-4 mr-1" /> Print / Save PDF</Button>
+          <Button variant="outline" onClick={() => downloadElementAsPDF("invoice-print", `${inv.invoice_no}.pdf`).catch(e => toast.error(e?.message ?? "Download failed"))}>
+            <Download className="size-4 mr-1" /> Download PDF
+          </Button>
+          <Button onClick={() => window.print()}><Printer className="size-4 mr-1" /> Print</Button>
         </div>
-        <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: brand }}>
+        <div id="invoice-print" className="border-2 rounded-lg overflow-hidden bg-white" style={{ borderColor: brand }}>
           {/* Header */}
           <div className="px-6 py-5 flex items-start justify-between gap-6" style={{ background: brand, color: "white" }}>
             <div className="flex items-center gap-3">

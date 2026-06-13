@@ -16,7 +16,7 @@ import { StateSelect } from "@/components/StateSelect";
 import { StatusBadge } from "@/components/StatusBadge";
 import { fmtINR, fmtDate, nextDocNo } from "@/lib/queries";
 import { calcGst } from "@/lib/states";
-import { Plus, ArrowRight, FileText, Truck, CheckCircle2 } from "lucide-react";
+import { Plus, ArrowRight, FileText, Truck, CheckCircle2, Receipt } from "lucide-react";
 import { toast } from "sonner";
 
 interface OrderSearch { fromInquiry?: string }
@@ -160,29 +160,39 @@ function OrdersPage() {
   };
 
   const generateInvoice = async (id: string) => {
-    if (!company) return;
-    setDetailId(null);
-    const { data: o } = await supabase.from("orders").select("*").eq("id", id).single();
-    if (!o) return;
-    const { data: existing } = await supabase.from("invoices").select("id").eq("order_id", id).maybeSingle();
-    if (existing) { await navigate({ to: "/invoices/$invoiceId", params: { invoiceId: existing.id } }); return; }
-    const seq = await nextDocNo(company.id, "ORD" as never);
-    const invoice_no = seq.replace("ORD-", "INV-");
-    const sub = Number(o.freight_amount);
-    const { data: inv, error } = await supabase.from("invoices").insert({
-      company_id: company.id, invoice_no, order_id: id, party_id: o.party_id, party_gst_id: o.party_gst_id,
-      consignor_state: o.consignor_state, consignee_state: o.consignee_state,
-      subtotal: sub, cgst_amount: o.cgst_amount ?? 0, sgst_amount: o.sgst_amount ?? 0, igst_amount: o.igst_amount ?? 0,
-      total_amount: o.total_amount || sub, created_by: user?.id ?? null,
-    }).select("id").single();
-    if (error || !inv) return toast.error(error?.message ?? "Failed");
-    await supabase.from("invoice_items").insert({
-      company_id: company.id, invoice_id: inv.id,
-      description: `Freight ${o.from_city ?? ""} to ${o.to_city ?? ""} · ${o.material ?? ""}`,
-      qty: 1, unit: "Trip", rate: sub, amount: sub, gst_rate: o.gst_rate ?? 5,
-    });
-    toast.success(`Invoice ${invoice_no} generated`);
-    await navigate({ to: "/invoices/$invoiceId", params: { invoiceId: inv.id } });
+    if (!company || !user) return;
+    try {
+      setDetailId(null);
+      const { data: o, error: oErr } = await supabase.from("orders").select("*").eq("id", id).single();
+      if (oErr || !o) { toast.error(oErr?.message ?? "Order not found"); return; }
+      const { data: existing } = await supabase.from("invoices").select("id,invoice_no").eq("order_id", id).maybeSingle();
+      if (existing) {
+        toast.info(`Invoice ${existing.invoice_no} already exists`);
+        await navigate({ to: "/invoices/$invoiceId", params: { invoiceId: existing.id } });
+        return;
+      }
+      const seq = await nextDocNo(company.id, "INV" as never);
+      const invoice_no = seq;
+      const sub = Number(o.freight_amount || 0);
+      const total = Number(o.total_amount || sub);
+      const { data: inv, error } = await supabase.from("invoices").insert({
+        company_id: company.id, invoice_no, order_id: id, party_id: o.party_id, party_gst_id: o.party_gst_id,
+        consignor_state: o.consignor_state, consignee_state: o.consignee_state,
+        subtotal: sub, cgst_amount: o.cgst_amount ?? 0, sgst_amount: o.sgst_amount ?? 0, igst_amount: o.igst_amount ?? 0,
+        total_amount: total, created_by: user.id,
+      }).select("id").single();
+      if (error || !inv) { toast.error(error?.message ?? "Failed to create invoice"); return; }
+      const { error: itErr } = await supabase.from("invoice_items").insert({
+        company_id: company.id, invoice_id: inv.id,
+        description: `Freight ${o.from_city ?? ""} to ${o.to_city ?? ""} · ${o.material ?? ""}`.trim(),
+        qty: 1, unit: "Trip", rate: sub, amount: sub, gst_rate: o.gst_rate ?? 5,
+      });
+      if (itErr) toast.error(itErr.message);
+      toast.success(`Invoice ${invoice_no} generated`);
+      await navigate({ to: "/invoices/$invoiceId", params: { invoiceId: inv.id } });
+    } catch (e) {
+      toast.error((e as Error)?.message ?? "Unexpected error");
+    }
   };
 
   const filtered = rows.filter(r => filter === "all" || r.status === filter);
@@ -282,7 +292,8 @@ function OrdersPage() {
                   <TableCell><StatusBadge value={r.status} /></TableCell>
                   <TableCell className="font-mono text-xs">{r.bilty_no ?? "—"}</TableCell>
                   <TableCell onClick={e => e.stopPropagation()} className="flex gap-1">
-                    <Button size="sm" variant="outline" onClick={() => generateBilty(r.id)}><FileText className="size-3" /></Button>
+                    <Button size="sm" variant="outline" title="Bilty / LR" onClick={() => generateBilty(r.id)}><FileText className="size-3" /></Button>
+                    <Button size="sm" variant="outline" title="Tax Invoice" onClick={() => generateInvoice(r.id)}><Receipt className="size-3" /></Button>
                   </TableCell>
                 </TableRow>
               ))}

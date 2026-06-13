@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fmtINR, fmtDate } from "@/lib/queries";
-import { Printer, Pencil } from "lucide-react";
+import { fmtINR, fmtDate, downloadElementAsPDF } from "@/lib/queries";
+import { Printer, Pencil, Download } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/orders/$orderId/bilty")({ component: BiltyPage });
@@ -62,9 +62,13 @@ function BiltyPage() {
               <EditBilty data={data} userId={user?.id ?? ""} companyId={company?.id ?? ""} onClose={() => { setEditOpen(false); load(); }} />
             </Dialog>
           )}
-          <Button onClick={() => window.print()}><Printer className="size-4 mr-1" /> Print / Save PDF</Button>
+          <Button variant="outline" onClick={() => downloadElementAsPDF("bilty-print", `${data.bilty_no ?? data.order_no}.pdf`).catch(e => toast.error(e?.message ?? "Download failed"))}>
+            <Download className="size-4 mr-1" /> Download PDF
+          </Button>
+          <Button onClick={() => window.print()}><Printer className="size-4 mr-1" /> Print</Button>
         </div>
 
+        <div id="bilty-print" className="bg-white">
         {tpl === "thermal" ? (
           <ThermalBilty data={data} company={company} balance={balance} />
         ) : tpl === "fullpage" ? (
@@ -72,6 +76,7 @@ function BiltyPage() {
         ) : (
           <StandardBilty data={data} company={company} balance={balance} brand={brand} />
         )}
+        </div>
       </div>
     </div>
   );
