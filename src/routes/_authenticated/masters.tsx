@@ -25,11 +25,13 @@ function MastersPage() {
         <Tabs defaultValue="parties">
           <TabsList>
             <TabsTrigger value="parties"><Building2 className="size-4 mr-1" /> Parties & GST</TabsTrigger>
+            <TabsTrigger value="transporters"><Truck className="size-4 mr-1" /> Transporters & Payments</TabsTrigger>
             <TabsTrigger value="products"><Package className="size-4 mr-1" /> Products</TabsTrigger>
             <TabsTrigger value="vehicles"><Truck className="size-4 mr-1" /> Vehicles</TabsTrigger>
             <TabsTrigger value="banks"><Landmark className="size-4 mr-1" /> Bank Accounts</TabsTrigger>
           </TabsList>
           <TabsContent value="parties" className="mt-4"><PartiesTab /></TabsContent>
+          <TabsContent value="transporters" className="mt-4"><TransportersTab /></TabsContent>
           <TabsContent value="products" className="mt-4"><ProductsTab /></TabsContent>
           <TabsContent value="vehicles" className="mt-4"><VehiclesTab /></TabsContent>
           <TabsContent value="banks" className="mt-4"><BanksTab /></TabsContent>
