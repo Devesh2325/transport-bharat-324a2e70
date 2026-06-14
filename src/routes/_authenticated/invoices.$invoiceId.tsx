@@ -163,11 +163,14 @@ function InvoicePage() {
           )}
 
           <div className="grid grid-cols-2 border-t text-xs">
-            <div className="p-4 border-r h-24 text-gray-600">Receiver signature</div>
-            <div className="p-4 h-24 text-right">
+            <div className="p-4 border-r h-28 text-gray-600">Receiver signature</div>
+            <div className="p-4 h-28 text-right relative">
               <div>For {company?.name}</div>
-              {(company as never as { signature_url?: string })?.signature_url && <img src={(company as never as { signature_url?: string })?.signature_url} className="h-12 ml-auto mt-1" alt="" />}
-              <div className="mt-2 text-gray-500">Authorised Signatory</div>
+              <div className="flex items-end justify-end gap-2 mt-1 h-16">
+                {company?.stamp_url && <img src={company.stamp_url} className="h-16 object-contain" alt="Stamp" />}
+                {company?.signature_url && <img src={company.signature_url} className="h-12 object-contain" alt="Signature" />}
+              </div>
+              <div className="mt-1 text-gray-500">Authorised Signatory</div>
             </div>
           </div>
         </div>

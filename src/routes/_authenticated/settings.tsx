@@ -83,14 +83,15 @@ function Settings() {
 
           <section className="rounded-xl border bg-card p-6 space-y-4">
             <h2 className="font-display font-semibold text-lg">Branding (used in Bilty & Invoice)</h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div><Label>Logo URL</Label><Input value={f.logo_url} onChange={set("logo_url")} disabled={!isAdmin} placeholder="https://…" />{f.logo_url && <img src={f.logo_url} alt="" className="mt-2 h-12 rounded border bg-white p-1" />}</div>
-              <div><Label>Signature URL</Label><Input value={f.signature_url} onChange={set("signature_url")} disabled={!isAdmin} />{f.signature_url && <img src={f.signature_url} alt="" className="mt-2 h-12 rounded border bg-white p-1" />}</div>
-              <div><Label>Stamp URL</Label><Input value={f.stamp_url} onChange={set("stamp_url")} disabled={!isAdmin} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Primary</Label><div className="flex gap-2 items-center mt-1.5"><input type="color" value={f.brand_primary} onChange={set("brand_primary")} disabled={!isAdmin} className="h-10 w-14 rounded border" /><Input value={f.brand_primary} onChange={set("brand_primary")} disabled={!isAdmin} /></div></div>
-                <div><Label>Accent</Label><div className="flex gap-2 items-center mt-1.5"><input type="color" value={f.brand_accent} onChange={set("brand_accent")} disabled={!isAdmin} className="h-10 w-14 rounded border" /><Input value={f.brand_accent} onChange={set("brand_accent")} disabled={!isAdmin} /></div></div>
-              </div>
+            <p className="text-xs text-muted-foreground">Upload from your device or paste an image URL. Logo and stamp appear automatically on every Bilty and Tax Invoice PDF.</p>
+            <div className="grid md:grid-cols-3 gap-4">
+              <BrandingField label="Company Logo" value={f.logo_url} onChange={v => setF({ ...f, logo_url: v })} disabled={!isAdmin} companyId={company?.id ?? ""} kind="logo" />
+              <BrandingField label="Stamp / Seal" value={f.stamp_url} onChange={v => setF({ ...f, stamp_url: v })} disabled={!isAdmin} companyId={company?.id ?? ""} kind="stamp" />
+              <BrandingField label="Signature" value={f.signature_url} onChange={v => setF({ ...f, signature_url: v })} disabled={!isAdmin} companyId={company?.id ?? ""} kind="signature" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 max-w-md">
+              <div><Label>Primary colour</Label><div className="flex gap-2 items-center mt-1.5"><input type="color" value={f.brand_primary} onChange={set("brand_primary")} disabled={!isAdmin} className="h-10 w-14 rounded border" /><Input value={f.brand_primary} onChange={set("brand_primary")} disabled={!isAdmin} /></div></div>
+              <div><Label>Accent colour</Label><div className="flex gap-2 items-center mt-1.5"><input type="color" value={f.brand_accent} onChange={set("brand_accent")} disabled={!isAdmin} className="h-10 w-14 rounded border" /><Input value={f.brand_accent} onChange={set("brand_accent")} disabled={!isAdmin} /></div></div>
             </div>
           </section>
 
@@ -124,6 +125,34 @@ function Settings() {
 
           {isAdmin && <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>}
         </form>
+      </div>
+    </div>
+  );
+}
+
+function BrandingField({ label, value, onChange, disabled, companyId, kind }: { label: string; value: string; onChange: (v: string) => void; disabled: boolean; companyId: string; kind: "logo" | "stamp" | "signature" }) {
+  const [uploading, setUploading] = useState(false);
+  const onFile = async (file: File) => {
+    if (!companyId) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${companyId}/${kind}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("branding").upload(path, file, { upsert: true, cacheControl: "3600" });
+    if (error) { toast.error(error.message); setUploading(false); return; }
+    const { data } = supabase.storage.from("branding").getPublicUrl(path);
+    onChange(data.publicUrl);
+    setUploading(false);
+    toast.success(`${label} uploaded`);
+  };
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className="mt-1.5 space-y-2">
+        {value && <img src={value} alt="" className="h-20 w-full object-contain rounded border bg-white p-2" />}
+        <Input value={value} onChange={e => onChange(e.target.value)} disabled={disabled} placeholder="Paste image URL or upload below" />
+        <Input type="file" accept="image/*" disabled={disabled || uploading} onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+        {uploading && <div className="text-xs text-muted-foreground">Uploading…</div>}
+        {value && <Button type="button" size="sm" variant="ghost" onClick={() => onChange("")} disabled={disabled}>Remove</Button>}
       </div>
     </div>
   );

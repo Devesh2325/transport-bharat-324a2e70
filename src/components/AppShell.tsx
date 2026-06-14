@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Inbox, ClipboardList, Wallet, BarChart3, Users, Settings, ShieldCheck, LogOut, Truck, Crown, Menu, Database, FileText, BookOpen } from "lucide-react";
+import { LayoutDashboard, Inbox, ClipboardList, Wallet, BarChart3, Users, Settings, ShieldCheck, LogOut, Truck, Crown, Menu, Database, FileText, BookOpen, Receipt } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const NAV_FULL = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -11,6 +12,7 @@ const NAV_FULL = [
   { to: "/orders", label: "Orders", icon: ClipboardList },
   { to: "/invoices", label: "Invoices", icon: FileText },
   { to: "/payments", label: "Payments", icon: Wallet },
+  { to: "/expenses", label: "Expenses", icon: Receipt },
   { to: "/ledger", label: "Party Ledger", icon: BookOpen },
   { to: "/masters", label: "Master Data", icon: Database },
   { to: "/reports", label: "Reports", icon: BarChart3 },
@@ -36,9 +38,12 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
   return (
     <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground">
       <div className="p-5 border-b border-sidebar-border">
-        <div className="flex items-center gap-2 font-display font-bold text-lg">
-          <span className="grid place-items-center size-8 rounded-md bg-[var(--gradient-brand)]"><Truck className="size-4" /></span>
-          TransFlow
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 font-display font-bold text-lg">
+            <span className="grid place-items-center size-8 rounded-md bg-[var(--gradient-brand)]"><Truck className="size-4" /></span>
+            TransFlow
+          </div>
+          <ThemeToggle className="text-sidebar-foreground hover:bg-sidebar-accent" />
         </div>
         {company && (
           <div className="mt-4 rounded-lg bg-sidebar-accent/40 px-3 py-2.5">
@@ -89,7 +94,7 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="min-h-screen md:grid md:grid-cols-[260px_1fr] bg-background">
+    <div className="min-h-screen md:grid md:grid-cols-[260px_1fr] bg-background text-foreground">
       <aside className="hidden md:block border-r border-sidebar-border">
         <SidebarContent />
       </aside>
@@ -98,7 +103,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <SheetTrigger asChild><Button size="icon" variant="ghost"><Menu className="size-5" /></Button></SheetTrigger>
           <SheetContent side="left" className="p-0 w-72"><SidebarContent onNav={() => setOpen(false)} /></SheetContent>
         </Sheet>
-        <div className="flex items-center gap-2 font-display font-bold"><Truck className="size-4" /> TransFlow</div>
+        <div className="flex items-center gap-2 font-display font-bold flex-1"><Truck className="size-4" /> TransFlow</div>
+        <ThemeToggle />
       </div>
       <main className="overflow-x-hidden">{children}</main>
     </div>
