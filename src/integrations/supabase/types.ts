@@ -218,6 +218,36 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       doc_counters: {
         Row: {
           company_id: string
@@ -240,6 +270,132 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          active: boolean
+          company_id: string
+          created_at: string
+          designation: string | null
+          email: string | null
+          id: string
+          joined_at: string | null
+          monthly_salary: number | null
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          company_id: string
+          created_at?: string
+          designation?: string | null
+          email?: string | null
+          id?: string
+          joined_at?: string | null
+          monthly_salary?: number | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          company_id?: string
+          created_at?: string
+          designation?: string | null
+          email?: string | null
+          id?: string
+          joined_at?: string | null
+          monthly_salary?: number | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          attachment_url: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          employee_id: string | null
+          expense_date: string
+          id: string
+          paid_by: string | null
+          reference: string | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          amount?: number
+          attachment_url?: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          employee_id?: string | null
+          expense_date?: string
+          id?: string
+          paid_by?: string | null
+          reference?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          amount?: number
+          attachment_url?: string | null
+          category?: Database["public"]["Enums"]["expense_category"]
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          employee_id?: string | null
+          expense_date?: string
+          id?: string
+          paid_by?: string | null
+          reference?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]
@@ -753,6 +909,9 @@ export type Database = {
           order_id: string | null
           paid_at: string
           party_id: string | null
+          payment_type:
+            | Database["public"]["Enums"]["transporter_payment_type"]
+            | null
           reference: string | null
         }
         Insert: {
@@ -769,6 +928,9 @@ export type Database = {
           order_id?: string | null
           paid_at?: string
           party_id?: string | null
+          payment_type?:
+            | Database["public"]["Enums"]["transporter_payment_type"]
+            | null
           reference?: string | null
         }
         Update: {
@@ -785,6 +947,9 @@ export type Database = {
           order_id?: string | null
           paid_at?: string
           party_id?: string | null
+          payment_type?:
+            | Database["public"]["Enums"]["transporter_payment_type"]
+            | null
           reference?: string | null
         }
         Relationships: [
@@ -1063,6 +1228,13 @@ export type Database = {
         | "agent"
         | "finance"
         | "transporter"
+      expense_category:
+        | "employee_salary"
+        | "fuel"
+        | "vehicle_maintenance"
+        | "toll"
+        | "office"
+        | "misc"
       inquiry_status: "new" | "quoted" | "negotiating" | "won" | "lost"
       invite_status: "pending" | "accepted" | "revoked" | "expired"
       order_status:
@@ -1075,6 +1247,7 @@ export type Database = {
       payment_direction: "receivable" | "payable"
       payment_mode: "cash" | "upi" | "bank" | "cheque"
       subscription_status: "trial" | "active" | "expired" | "suspended"
+      transporter_payment_type: "advance" | "partial" | "final"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1209,6 +1382,14 @@ export const Constants = {
         "finance",
         "transporter",
       ],
+      expense_category: [
+        "employee_salary",
+        "fuel",
+        "vehicle_maintenance",
+        "toll",
+        "office",
+        "misc",
+      ],
       inquiry_status: ["new", "quoted", "negotiating", "won", "lost"],
       invite_status: ["pending", "accepted", "revoked", "expired"],
       order_status: [
@@ -1222,6 +1403,7 @@ export const Constants = {
       payment_direction: ["receivable", "payable"],
       payment_mode: ["cash", "upi", "bank", "cheque"],
       subscription_status: ["trial", "active", "expired", "suspended"],
+      transporter_payment_type: ["advance", "partial", "final"],
     },
   },
 } as const
