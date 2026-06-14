@@ -129,3 +129,31 @@ function Settings() {
     </div>
   );
 }
+
+function BrandingField({ label, value, onChange, disabled, companyId, kind }: { label: string; value: string; onChange: (v: string) => void; disabled: boolean; companyId: string; kind: "logo" | "stamp" | "signature" }) {
+  const [uploading, setUploading] = useState(false);
+  const onFile = async (file: File) => {
+    if (!companyId) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `${companyId}/${kind}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("branding").upload(path, file, { upsert: true, cacheControl: "3600" });
+    if (error) { toast.error(error.message); setUploading(false); return; }
+    const { data } = supabase.storage.from("branding").getPublicUrl(path);
+    onChange(data.publicUrl);
+    setUploading(false);
+    toast.success(`${label} uploaded`);
+  };
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className="mt-1.5 space-y-2">
+        {value && <img src={value} alt="" className="h-20 w-full object-contain rounded border bg-white p-2" />}
+        <Input value={value} onChange={e => onChange(e.target.value)} disabled={disabled} placeholder="Paste image URL or upload below" />
+        <Input type="file" accept="image/*" disabled={disabled || uploading} onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+        {uploading && <div className="text-xs text-muted-foreground">Uploading…</div>}
+        {value && <Button type="button" size="sm" variant="ghost" onClick={() => onChange("")} disabled={disabled}>Remove</Button>}
+      </div>
+    </div>
+  );
+}
