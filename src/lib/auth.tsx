@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (prof?.company_id) {
       const { data: comp } = await supabase
         .from("companies")
-        .select("id,name,slug,status,trial_ends_at,plan_expires_at,logo_url,brand_primary,brand_accent,plans(code,name,user_limit,features)")
+        .select("*,plans(code,name,user_limit,features)")
         .eq("id", prof.company_id)
         .maybeSingle();
       if (comp) {
@@ -74,8 +74,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           trial_ends_at: comp.trial_ends_at,
           plan_expires_at: comp.plan_expires_at,
           logo_url: comp.logo_url,
+          stamp_url: (comp as never as { stamp_url: string | null }).stamp_url ?? null,
+          signature_url: (comp as never as { signature_url: string | null }).signature_url ?? null,
           brand_primary: comp.brand_primary,
           brand_accent: comp.brand_accent,
+          address: (comp as never as { address: string | null }).address ?? null,
+          phone: (comp as never as { phone: string | null }).phone ?? null,
+          email: (comp as never as { email: string | null }).email ?? null,
+          gst_number: (comp as never as { gst_number: string | null }).gst_number ?? null,
+          bank_name: (comp as never as { bank_name: string | null }).bank_name ?? null,
+          bank_branch: (comp as never as { bank_branch: string | null }).bank_branch ?? null,
+          bank_account_no: (comp as never as { bank_account_no: string | null }).bank_account_no ?? null,
+          bank_ifsc: (comp as never as { bank_ifsc: string | null }).bank_ifsc ?? null,
+          invoice_terms: (comp as never as { invoice_terms: string | null }).invoice_terms ?? null,
+          invoice_footer: (comp as never as { invoice_footer: string | null }).invoice_footer ?? null,
+          bilty_template: (comp as never as { bilty_template: string | null }).bilty_template ?? null,
           plan: plan
             ? { code: plan.code, name: plan.name, user_limit: plan.user_limit, features: (plan.features ?? {}) as Record<string, unknown> }
             : null,
