@@ -129,8 +129,14 @@ function StandardBilty({ data, company, balance, brand }: { data: BiltyData; com
         </table>
       </div>
       <div className="grid grid-cols-2 border-t text-xs text-gray-600">
-        <div className="p-4 border-r h-24"><div className="mb-8">Consignor signature</div></div>
-        <div className="p-4 h-24 text-right"><div className="mb-8">For {company?.name}</div></div>
+        <div className="p-4 border-r h-28"><div className="mb-8">Consignor signature</div></div>
+        <div className="p-4 h-28 text-right">
+          <div className="mb-2">For {company?.name}</div>
+          <div className="flex items-end justify-end gap-2 h-16">
+            {(company as never as { stamp_url?: string })?.stamp_url && <img src={(company as never as { stamp_url?: string })?.stamp_url} className="h-16 object-contain" alt="Stamp" />}
+            {(company as never as { signature_url?: string })?.signature_url && <img src={(company as never as { signature_url?: string })?.signature_url} className="h-12 object-contain" alt="Signature" />}
+          </div>
+        </div>
       </div>
     </div>
   );
