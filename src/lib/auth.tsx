@@ -12,8 +12,21 @@ export interface CompanyContext {
   trial_ends_at: string;
   plan_expires_at: string | null;
   logo_url: string | null;
+  stamp_url: string | null;
+  signature_url: string | null;
   brand_primary: string | null;
   brand_accent: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  gst_number: string | null;
+  bank_name: string | null;
+  bank_branch: string | null;
+  bank_account_no: string | null;
+  bank_ifsc: string | null;
+  invoice_terms: string | null;
+  invoice_footer: string | null;
+  bilty_template: string | null;
   plan: { code: string; name: string; user_limit: number; features: Record<string, unknown> } | null;
 }
 
