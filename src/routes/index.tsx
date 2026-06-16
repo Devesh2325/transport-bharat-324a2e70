@@ -233,10 +233,10 @@ function ContactSection() {
   const [f, setF] = useState({ name: "", email: "", phone: "", company: "", message: "" });
   const [busy, setBusy] = useState(false);
   const submit = async () => {
-    if (!f.name || !f.message) return toast.error("Name and message required");
+    if (!f.name || !f.email || !f.message) return toast.error("Name, email and message required");
     setBusy(true);
     const { error } = await supabase.from("contact_messages").insert({
-      name: f.name, email: f.email || null, phone: f.phone || null, company: f.company || null, message: f.message,
+      name: f.name, email: f.email, phone: f.phone || null, company: f.company || null, message: f.message,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
