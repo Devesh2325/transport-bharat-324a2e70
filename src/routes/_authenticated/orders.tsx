@@ -235,7 +235,14 @@ function OrdersPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div><Label>Weight (t)</Label><Input type="number" value={form.weight_tons} onChange={e => setForm({ ...form, weight_tons: e.target.value })} /></div>
                   <div><Label>Freight (₹)</Label><Input type="number" value={form.freight_amount} onChange={e => setForm({ ...form, freight_amount: e.target.value })} /></div>
-                  <div><Label>GST %</Label><Input type="number" value={form.gst_rate} onChange={e => setForm({ ...form, gst_rate: e.target.value })} /></div>
+                  <div><Label>GST %</Label>
+                    <Select value={form.gst_rate} onValueChange={v => setForm({ ...form, gst_rate: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {["0","5","12","18","28"].map(r => <SelectItem key={r} value={r}>{r}%</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div><Label>Advance (₹)</Label><Input type="number" value={form.advance_amount} onChange={e => setForm({ ...form, advance_amount: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
