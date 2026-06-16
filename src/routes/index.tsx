@@ -262,7 +262,7 @@ function ContactSection() {
             <div><label className="text-xs font-medium">Company</label><Input value={f.company} onChange={e=>setF({...f,company:e.target.value})} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-xs font-medium">Email</label><Input type="email" value={f.email} onChange={e=>setF({...f,email:e.target.value})} /></div>
+            <div><label className="text-xs font-medium">Email *</label><Input type="email" value={f.email} onChange={e=>setF({...f,email:e.target.value})} /></div>
             <div><label className="text-xs font-medium">Phone</label><Input value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} /></div>
           </div>
           <div><label className="text-xs font-medium">Message *</label><Textarea rows={5} value={f.message} onChange={e=>setF({...f,message:e.target.value})} /></div>
