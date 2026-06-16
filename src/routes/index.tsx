@@ -1,13 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Truck, Receipt, Wallet, Users, Shield, BarChart3, ArrowRight } from "lucide-react";
+import { Truck, Receipt, Wallet, Users, Shield, BarChart3, ArrowRight, FileText, Search, Banknote, Building2, Mail, Phone, MapPin, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-export const Route = createFileRoute("/")({ component: Landing });
+export const Route = createFileRoute("/")({
+  component: Landing,
+  head: () => ({
+    meta: [
+      { title: "TransFlow — TMS for Indian Transport Brokers & Agencies" },
+      { name: "description", content: "Multi-tenant transport management for brokers: inquiries, orders, bilty, GST invoices, payments & ledgers — one workspace per company." },
+      { property: "og:title", content: "TransFlow — Move freight, not paperwork" },
+      { property: "og:description", content: "GST-ready TMS for Indian logistics brokers and transport agencies." },
+    ],
+  }),
+});
 
 function Landing() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav */}
       <header className="border-b border-border/60 backdrop-blur sticky top-0 z-40 bg-background/80">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold">
@@ -16,8 +31,10 @@ function Landing() {
           </Link>
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
+            <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
             <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-            <a href="#why" className="hover:text-foreground transition-colors">Why TransFlow</a>
+            <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
+            <a href="#contact" className="hover:text-foreground transition-colors">Contact</a>
           </nav>
           <div className="flex items-center gap-2">
             <Link to="/login"><Button variant="ghost" size="sm">Sign in</Button></Link>
@@ -41,9 +58,7 @@ function Landing() {
             TransFlow is a multi-tenant TMS for logistics brokers and transport agencies. Inquiries, rate negotiation, orders, bilty, GST invoices and payment tracking — one workspace per company.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/signup">
-              <Button size="lg" className="gap-2">Start 14-day free trial <ArrowRight className="size-4" /></Button>
-            </Link>
+            <Link to="/signup"><Button size="lg" className="gap-2">Start 14-day free trial <ArrowRight className="size-4" /></Button></Link>
             <a href="#features"><Button size="lg" variant="outline">Explore features</Button></a>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">No credit card · GST-ready · White-label friendly</p>
@@ -52,12 +67,16 @@ function Landing() {
 
       {/* Features */}
       <section id="features" className="mx-auto max-w-7xl px-6 py-24">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold">Everything a transport office needs</h2>
+          <p className="mt-3 text-muted-foreground">Replace 6 Excel sheets and a WhatsApp group with one structured workspace.</p>
+        </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
             { icon: Truck, title: "Inquiry → Order → Bilty", body: "Capture loads, negotiate rates with your team, dispatch trucks and auto-generate LR — all in one flow." },
             { icon: Receipt, title: "GST Invoicing", body: "Tax-compliant invoices with HSN codes, IGST/CGST split, and PDF download ready for the GST portal." },
             { icon: Wallet, title: "Payments & Ledger", body: "Track receivables from clients and payables to transporters. Bank-wise balances, party ledgers, daily cash flow." },
-            { icon: Users, title: "Roles & Quotas", body: "Invite agents and finance users. Plan-aware seat limits. Granular role-based permissions per workspace." },
+            { icon: Users, title: "Expenses & Salaries", body: "Daily expenses by category, employee records, salary payouts and per-month expense reports." },
             { icon: Shield, title: "True Data Isolation", body: "Workspace-scoped row-level security. No company can ever see another tenant's data. Audit logs included." },
             { icon: BarChart3, title: "Reports that matter", body: "Profit per order, party-wise outstanding, user performance. Export to Excel and PDF in one click." },
           ].map((f) => (
@@ -72,8 +91,73 @@ function Landing() {
         </div>
       </section>
 
+      {/* Benefits */}
+      <section className="border-t border-border bg-muted/30">
+        <div className="mx-auto max-w-7xl px-6 py-24 grid md:grid-cols-4 gap-6 text-center">
+          {[
+            { k: "70%", v: "Less time on paperwork" },
+            { k: "100%", v: "GST-compliant invoices" },
+            { k: "₹0", v: "Setup cost on Free plan" },
+            { k: "24/7", v: "Cloud access, any device" },
+          ].map(b => (
+            <div key={b.v} className="rounded-2xl border bg-card p-8">
+              <div className="text-4xl font-bold bg-clip-text text-transparent bg-[var(--gradient-brand)]">{b.k}</div>
+              <div className="mt-2 text-sm text-muted-foreground">{b.v}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="how" className="mx-auto max-w-7xl px-6 py-24">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold">How TransFlow works</h2>
+          <p className="mt-3 text-muted-foreground">From load enquiry to payment — four simple stages.</p>
+        </div>
+        <div className="grid md:grid-cols-4 gap-6">
+          {[
+            { icon: Search, t: "1. Capture inquiry", d: "Log client enquiries with route, material, weight and expected rate." },
+            { icon: Truck, t: "2. Dispatch order", d: "Assign vehicle, transporter, driver and generate the bilty (LR) instantly." },
+            { icon: FileText, t: "3. Raise GST invoice", d: "One-click tax invoice from the order — CGST/SGST or IGST handled automatically." },
+            { icon: Banknote, t: "4. Track payments", d: "Record receipts and transporter payouts. See outstanding by party." },
+          ].map(s => (
+            <div key={s.t} className="rounded-2xl border bg-card p-6">
+              <div className="size-12 rounded-xl bg-primary/10 text-primary grid place-items-center mb-4"><s.icon className="size-6" /></div>
+              <h3 className="font-semibold">{s.t}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="border-t border-border bg-muted/30">
+        <div className="mx-auto max-w-7xl px-6 py-24">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold">Loved by transport offices</h2>
+            <p className="mt-3 text-muted-foreground">From single-truck owners to 200-vehicle agencies.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { n: "Rahul S.", c: "Bharti Roadlines, Indore", q: "Bilty and invoice in 30 seconds. Our accountant finally smiles at month-end." },
+              { n: "Priya K.", c: "Shree Cargo, Surat", q: "Party ledger and outstanding view alone is worth the subscription. Replaced 3 Excel files." },
+              { n: "Amit T.", c: "Highway Transport, Delhi", q: "Multi-user with roles means my dispatch team never touches finance data. Perfect." },
+            ].map(t => (
+              <div key={t.n} className="rounded-2xl border bg-card p-6">
+                <div className="flex gap-0.5 text-amber-500 mb-3">{[...Array(5)].map((_,i)=><Star key={i} className="size-4 fill-current" />)}</div>
+                <p className="text-sm leading-relaxed">"{t.q}"</p>
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="size-9 rounded-full bg-primary/10 text-primary grid place-items-center text-sm font-semibold">{t.n[0]}</div>
+                  <div><div className="text-sm font-medium">{t.n}</div><div className="text-xs text-muted-foreground">{t.c}</div></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
-      <section id="pricing" className="mx-auto max-w-7xl px-6 py-24 border-t border-border">
+      <section id="pricing" className="mx-auto max-w-7xl px-6 py-24">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold">Simple, transparent pricing</h2>
           <p className="mt-3 text-muted-foreground">Pay per workspace. Upgrade as you grow. Start free.</p>
@@ -100,11 +184,38 @@ function Landing() {
         </div>
       </section>
 
-      {/* Why */}
-      <section id="why" className="mx-auto max-w-7xl px-6 py-24 border-t border-border">
+      {/* FAQ */}
+      <section id="faq" className="border-t border-border bg-muted/30">
+        <div className="mx-auto max-w-3xl px-6 py-24">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold">Frequently asked</h2>
+          </div>
+          <Accordion type="single" collapsible className="space-y-3">
+            {[
+              { q: "Is TransFlow GST compliant?", a: "Yes. Invoices auto-split CGST/SGST for intrastate moves and IGST for interstate, with HSN code 996511 (goods transport). PDFs are portal-ready." },
+              { q: "Can my whole team use one workspace?", a: "Yes — invite agents, dispatch staff and finance users with role-based access. Free plan supports 2 users, Pro supports 10, Enterprise is unlimited." },
+              { q: "Is my data isolated from other companies?", a: "Absolutely. Every table uses workspace-scoped row-level security. Your data is never visible to any other tenant." },
+              { q: "Can I white-label the bilty and invoice?", a: "Pro and Enterprise plans let you upload your company logo, stamp and signature — they appear automatically on bilty (LR) and tax invoices." },
+              { q: "Do you support transporter payments?", a: "Yes — record advance, partial and final payments to transporters. Per-order and per-party outstanding views update in real time." },
+              { q: "How do expenses and salaries work?", a: "The Expenses module supports daily entries by category (Fuel, Toll, Maintenance, Office, Misc), plus employee records and salary payouts with monthly reports." },
+            ].map((f, i) => (
+              <AccordionItem key={i} value={`q${i}`} className="rounded-xl border bg-card px-4">
+                <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">{f.a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* Contact */}
+      <ContactSection />
+
+      {/* CTA */}
+      <section className="mx-auto max-w-7xl px-6 py-24">
         <div className="rounded-3xl bg-[var(--gradient-brand)] text-primary-foreground p-12 md:p-16 text-center">
           <h2 className="text-4xl md:text-5xl font-bold">Built for the Indian road.</h2>
-          <p className="mt-4 max-w-2xl mx-auto opacity-90">From a single broker handling 5 trucks to an agency managing 200, TransFlow scales with you. INR-native, GST-ready, Hindi support coming soon.</p>
+          <p className="mt-4 max-w-2xl mx-auto opacity-90">From a single broker handling 5 trucks to an agency managing 200, TransFlow scales with you.</p>
           <Link to="/signup" className="inline-block mt-8">
             <Button size="lg" variant="secondary">Create your workspace</Button>
           </Link>
@@ -115,5 +226,49 @@ function Landing() {
         © {new Date().getFullYear()} TransFlow SaaS · Built with care for logistics teams
       </footer>
     </div>
+  );
+}
+
+function ContactSection() {
+  const [f, setF] = useState({ name: "", email: "", phone: "", company: "", message: "" });
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    if (!f.name || !f.email || !f.message) return toast.error("Name, email and message required");
+    setBusy(true);
+    const { error } = await supabase.from("contact_messages").insert({
+      name: f.name, email: f.email, phone: f.phone || null, company: f.company || null, message: f.message,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Thanks — we'll get back to you within 1 business day.");
+    setF({ name: "", email: "", phone: "", company: "", message: "" });
+  };
+  return (
+    <section id="contact" className="mx-auto max-w-7xl px-6 py-24 border-t border-border">
+      <div className="grid md:grid-cols-2 gap-12">
+        <div>
+          <h2 className="text-4xl md:text-5xl font-bold">Talk to us</h2>
+          <p className="mt-3 text-muted-foreground">Questions about plans, migrations or custom features? Drop a message.</p>
+          <div className="mt-8 space-y-4 text-sm">
+            <div className="flex items-center gap-3"><span className="size-10 rounded-lg bg-primary/10 text-primary grid place-items-center"><Mail className="size-4" /></span> hello@transflow.in</div>
+            <div className="flex items-center gap-3"><span className="size-10 rounded-lg bg-primary/10 text-primary grid place-items-center"><Phone className="size-4" /></span> +91 90000 00000</div>
+            <div className="flex items-center gap-3"><span className="size-10 rounded-lg bg-primary/10 text-primary grid place-items-center"><MapPin className="size-4" /></span> Indore, Madhya Pradesh, India</div>
+            <div className="flex items-center gap-3"><span className="size-10 rounded-lg bg-primary/10 text-primary grid place-items-center"><Building2 className="size-4" /></span> Transport Bharti Pvt. Ltd.</div>
+          </div>
+        </div>
+        <div className="rounded-2xl border bg-card p-6 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="text-xs font-medium">Name *</label><Input value={f.name} onChange={e=>setF({...f,name:e.target.value})} /></div>
+            <div><label className="text-xs font-medium">Company</label><Input value={f.company} onChange={e=>setF({...f,company:e.target.value})} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="text-xs font-medium">Email *</label><Input type="email" value={f.email} onChange={e=>setF({...f,email:e.target.value})} /></div>
+            <div><label className="text-xs font-medium">Phone</label><Input value={f.phone} onChange={e=>setF({...f,phone:e.target.value})} /></div>
+          </div>
+          <div><label className="text-xs font-medium">Message *</label><Textarea rows={5} value={f.message} onChange={e=>setF({...f,message:e.target.value})} /></div>
+          <Button onClick={submit} disabled={busy} className="w-full">{busy ? "Sending…" : "Send message"}</Button>
+        </div>
+      </div>
+    </section>
   );
 }
