@@ -26,6 +26,7 @@ import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminCompaniesRouteImport } from './routes/_authenticated/admin/companies'
@@ -116,6 +117,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedInvoicesIndexRoute =
+  AuthenticatedInvoicesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedInvoicesRoute,
+  } as any)
 const AuthenticatedInvoicesInvoiceIdRoute =
   AuthenticatedInvoicesInvoiceIdRouteImport.update({
     id: '/$invoiceId',
@@ -160,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
+  '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/orders/$orderId/bilty': typeof AuthenticatedOrdersOrderIdBiltyRoute
 }
 export interface FileRoutesByTo {
@@ -170,7 +178,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/inquiries': typeof AuthenticatedInquiriesRoute
-  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/ledger': typeof AuthenticatedLedgerRoute
   '/masters': typeof AuthenticatedMastersRoute
   '/orders': typeof AuthenticatedOrdersRouteWithChildren
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
+  '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/orders/$orderId/bilty': typeof AuthenticatedOrdersOrderIdBiltyRoute
 }
 export interface FileRoutesById {
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/companies': typeof AuthenticatedAdminCompaniesRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
+  '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/orders/$orderId/bilty': typeof AuthenticatedOrdersOrderIdBiltyRoute
 }
 export interface FileRouteTypes {
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/admin/companies'
     | '/admin/plans'
     | '/invoices/$invoiceId'
+    | '/invoices/'
     | '/orders/$orderId/bilty'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -240,7 +250,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/expenses'
     | '/inquiries'
-    | '/invoices'
     | '/ledger'
     | '/masters'
     | '/orders'
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/admin/companies'
     | '/admin/plans'
     | '/invoices/$invoiceId'
+    | '/invoices'
     | '/orders/$orderId/bilty'
   id:
     | '__root__'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/companies'
     | '/_authenticated/admin/plans'
     | '/_authenticated/invoices/$invoiceId'
+    | '/_authenticated/invoices/'
     | '/_authenticated/orders/$orderId/bilty'
   fileRoutesById: FileRoutesById
 }
@@ -406,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/invoices/': {
+      id: '/_authenticated/invoices/'
+      path: '/'
+      fullPath: '/invoices/'
+      preLoaderRoute: typeof AuthenticatedInvoicesIndexRouteImport
+      parentRoute: typeof AuthenticatedInvoicesRoute
+    }
     '/_authenticated/invoices/$invoiceId': {
       id: '/_authenticated/invoices/$invoiceId'
       path: '/$invoiceId'
@@ -452,10 +470,12 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedInvoicesRouteChildren {
   AuthenticatedInvoicesInvoiceIdRoute: typeof AuthenticatedInvoicesInvoiceIdRoute
+  AuthenticatedInvoicesIndexRoute: typeof AuthenticatedInvoicesIndexRoute
 }
 
 const AuthenticatedInvoicesRouteChildren: AuthenticatedInvoicesRouteChildren = {
   AuthenticatedInvoicesInvoiceIdRoute: AuthenticatedInvoicesInvoiceIdRoute,
+  AuthenticatedInvoicesIndexRoute: AuthenticatedInvoicesIndexRoute,
 }
 
 const AuthenticatedInvoicesRouteWithChildren =
@@ -519,12 +539,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

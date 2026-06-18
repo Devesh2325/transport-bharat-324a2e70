@@ -139,16 +139,17 @@ function BrandingField({ label, value, onChange, disabled, companyId, kind }: { 
     const path = `${companyId}/${kind}-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("branding").upload(path, file, { upsert: true, cacheControl: "3600" });
     if (error) { toast.error(error.message); setUploading(false); return; }
-    const { data } = supabase.storage.from("branding").getPublicUrl(path);
-    onChange(data.publicUrl);
+    const { data: signed, error: sErr } = await supabase.storage.from("branding").createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    if (sErr || !signed) { toast.error(sErr?.message ?? "Failed to sign URL"); setUploading(false); return; }
+    onChange(signed.signedUrl);
     setUploading(false);
-    toast.success(`${label} uploaded`);
+    toast.success(`${label} uploaded — click Save changes to apply.`);
   };
   return (
     <div>
       <Label>{label}</Label>
       <div className="mt-1.5 space-y-2">
-        {value && <img src={value} alt="" className="h-20 w-full object-contain rounded border bg-white p-2" />}
+        {value && <img src={value} alt={label} className="h-20 w-full object-contain rounded border bg-white p-2" />}
         <Input value={value} onChange={e => onChange(e.target.value)} disabled={disabled} placeholder="Paste image URL or upload below" />
         <Input type="file" accept="image/*" disabled={disabled || uploading} onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
         {uploading && <div className="text-xs text-muted-foreground">Uploading…</div>}
