@@ -10,7 +10,7 @@ import { FileText, Printer } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/invoices")({ component: InvoicesPage });
 
-interface Inv { id: string; invoice_no: string; invoice_date: string; total_amount: number; status: string; parties: { name: string } | null }
+interface Inv { id: string; invoice_no: string; invoice_date: string; total_amount: number; status: string; party_id: string | null; parties: { name: string } | null }
 
 function InvoicesPage() {
   const { company } = useAuth();
@@ -18,8 +18,21 @@ function InvoicesPage() {
 
   useEffect(() => {
     if (!company) return;
-    supabase.from("invoices").select("id,invoice_no,invoice_date,total_amount,status,parties(name)").eq("company_id", company.id).order("created_at", { ascending: false })
-      .then(({ data }) => setRows((data ?? []) as never as Inv[]));
+    (async () => {
+      const { data: invs, error } = await supabase
+        .from("invoices")
+        .select("id,invoice_no,invoice_date,total_amount,status,party_id")
+        .eq("company_id", company.id)
+        .order("created_at", { ascending: false });
+      if (error) { console.error(error); setRows([]); return; }
+      const partyIds = Array.from(new Set((invs ?? []).map(i => i.party_id).filter(Boolean) as string[]));
+      let partyMap: Record<string, string> = {};
+      if (partyIds.length) {
+        const { data: parties } = await supabase.from("parties").select("id,name").in("id", partyIds);
+        partyMap = Object.fromEntries((parties ?? []).map(p => [p.id, p.name]));
+      }
+      setRows((invs ?? []).map(i => ({ ...i, parties: i.party_id ? { name: partyMap[i.party_id] ?? "—" } : null })) as Inv[]);
+    })();
   }, [company?.id]);
 
   return (
