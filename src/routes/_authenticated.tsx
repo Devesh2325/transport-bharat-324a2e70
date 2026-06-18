@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
+  // Supabase persists the session in localStorage which is unavailable during SSR.
+  // Render this subtree client-only so a hard refresh doesn't bounce signed-in users to /login.
+  ssr: false,
   beforeLoad: async () => {
     // Retry briefly — Supabase may still be hydrating the session from storage
     // right after login or a tab restore, causing a false redirect to /login.
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       const { data } = await supabase.auth.getSession();
       if (data.session) return;
       await new Promise((r) => setTimeout(r, 50));

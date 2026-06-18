@@ -27,12 +27,30 @@ function InvoicePage() {
 
   useEffect(() => {
     (async () => {
-      const { data: i } = await supabase.from("invoices")
-        .select("id,invoice_no,invoice_date,due_date,consignor_state,consignee_state,subtotal,cgst_amount,sgst_amount,igst_amount,total_amount,notes,parties(name,address,gst,phone,email),party_gst_registrations(gstin,legal_name,state,address),orders(order_no,from_city,to_city,vehicles(number))")
+      const { data: i, error } = await supabase.from("invoices")
+        .select("id,invoice_no,invoice_date,due_date,consignor_state,consignee_state,subtotal,cgst_amount,sgst_amount,igst_amount,total_amount,notes,party_id,party_gst_id,order_id")
         .eq("id", invoiceId).maybeSingle();
-      setInv(i as never as Inv);
-      const { data: it } = await supabase.from("invoice_items").select("*").eq("invoice_id", invoiceId);
-      setItems((it ?? []) as Item[]);
+      if (error) { toast.error(error.message); return; }
+      if (!i) return;
+      const [partyRes, gstRes, orderRes, itemsRes] = await Promise.all([
+        i.party_id ? supabase.from("parties").select("name,address,gst,phone,email").eq("id", i.party_id).maybeSingle() : Promise.resolve({ data: null }),
+        i.party_gst_id ? supabase.from("party_gst_registrations").select("gstin,legal_name,state,address").eq("id", i.party_gst_id).maybeSingle() : Promise.resolve({ data: null }),
+        i.order_id ? supabase.from("orders").select("order_no,from_city,to_city,vehicle_id").eq("id", i.order_id).maybeSingle() : Promise.resolve({ data: null }),
+        supabase.from("invoice_items").select("*").eq("invoice_id", invoiceId),
+      ]);
+      let vehicle: { number: string } | null = null;
+      const orderRow = orderRes.data as { order_no: string; from_city: string | null; to_city: string | null; vehicle_id: string | null } | null;
+      if (orderRow?.vehicle_id) {
+        const { data: v } = await supabase.from("vehicles").select("number").eq("id", orderRow.vehicle_id).maybeSingle();
+        vehicle = v as { number: string } | null;
+      }
+      setInv({
+        ...(i as never as Inv),
+        parties: partyRes.data as Inv["parties"],
+        party_gst_registrations: gstRes.data as Inv["party_gst_registrations"],
+        orders: orderRow ? { order_no: orderRow.order_no, from_city: orderRow.from_city, to_city: orderRow.to_city, vehicles: vehicle } : null,
+      });
+      setItems((itemsRes.data ?? []) as Item[]);
     })();
   }, [invoiceId]);
 
