@@ -50,9 +50,9 @@ function Landing() {
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground">
             <span className="size-1.5 rounded-full bg-success" /> Built for Indian transport brokers
           </span>
-          <h1 className="mt-6 text-5xl md:text-7xl font-bold tracking-tight">
+          <h1 className="mt-6 text-5xl md:text-7xl font-bold tracking-tight text-foreground">
             Move freight.<br />
-            <span className="bg-clip-text text-transparent bg-[var(--gradient-brand)]">Not paperwork.</span>
+            <span className="text-primary">Not paperwork.</span>
           </h1>
           <p className="mt-6 max-w-2xl mx-auto text-lg text-muted-foreground">
             TransFlow is a multi-tenant TMS for logistics brokers and transport agencies. Inquiries, rate negotiation, orders, bilty, GST invoices and payment tracking — one workspace per company.
@@ -216,9 +216,6 @@ function Landing() {
         <div className="rounded-3xl bg-[var(--gradient-brand)] text-primary-foreground p-12 md:p-16 text-center">
           <h2 className="text-4xl md:text-5xl font-bold">Built for the Indian road.</h2>
           <p className="mt-4 max-w-2xl mx-auto opacity-90">From a single broker handling 5 trucks to an agency managing 200, TransFlow scales with you.</p>
-          <Link to="/signup" className="inline-block mt-8">
-            <Button size="lg" variant="secondary">Create your workspace</Button>
-          </Link>
         </div>
       </section>
 
