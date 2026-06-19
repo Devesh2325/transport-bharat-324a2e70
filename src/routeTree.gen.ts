@@ -26,6 +26,7 @@ import { Route as AuthenticatedInquiriesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedOrdersIndexRouteImport } from './routes/_authenticated/orders.index'
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
@@ -117,6 +118,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedOrdersIndexRoute =
+  AuthenticatedOrdersIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedOrdersRoute,
+  } as any)
 const AuthenticatedInvoicesIndexRoute =
   AuthenticatedInvoicesIndexRouteImport.update({
     id: '/',
@@ -168,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/orders/': typeof AuthenticatedOrdersIndexRoute
   '/orders/$orderId/bilty': typeof AuthenticatedOrdersOrderIdBiltyRoute
 }
 export interface FileRoutesByTo {
@@ -180,7 +188,6 @@ export interface FileRoutesByTo {
   '/inquiries': typeof AuthenticatedInquiriesRoute
   '/ledger': typeof AuthenticatedLedgerRoute
   '/masters': typeof AuthenticatedMastersRoute
-  '/orders': typeof AuthenticatedOrdersRouteWithChildren
   '/payments': typeof AuthenticatedPaymentsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
+  '/orders': typeof AuthenticatedOrdersIndexRoute
   '/orders/$orderId/bilty': typeof AuthenticatedOrdersOrderIdBiltyRoute
 }
 export interface FileRoutesById {
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
+  '/_authenticated/orders/': typeof AuthenticatedOrdersIndexRoute
   '/_authenticated/orders/$orderId/bilty': typeof AuthenticatedOrdersOrderIdBiltyRoute
 }
 export interface FileRouteTypes {
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin/plans'
     | '/invoices/$invoiceId'
     | '/invoices/'
+    | '/orders/'
     | '/orders/$orderId/bilty'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -252,7 +262,6 @@ export interface FileRouteTypes {
     | '/inquiries'
     | '/ledger'
     | '/masters'
-    | '/orders'
     | '/payments'
     | '/reports'
     | '/settings'
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/admin/plans'
     | '/invoices/$invoiceId'
     | '/invoices'
+    | '/orders'
     | '/orders/$orderId/bilty'
   id:
     | '__root__'
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/plans'
     | '/_authenticated/invoices/$invoiceId'
     | '/_authenticated/invoices/'
+    | '/_authenticated/orders/'
     | '/_authenticated/orders/$orderId/bilty'
   fileRoutesById: FileRoutesById
 }
@@ -417,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/orders/': {
+      id: '/_authenticated/orders/'
+      path: '/'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof AuthenticatedOrdersIndexRouteImport
+      parentRoute: typeof AuthenticatedOrdersRoute
+    }
     '/_authenticated/invoices/': {
       id: '/_authenticated/invoices/'
       path: '/'
@@ -484,10 +502,12 @@ const AuthenticatedInvoicesRouteWithChildren =
   )
 
 interface AuthenticatedOrdersRouteChildren {
+  AuthenticatedOrdersIndexRoute: typeof AuthenticatedOrdersIndexRoute
   AuthenticatedOrdersOrderIdBiltyRoute: typeof AuthenticatedOrdersOrderIdBiltyRoute
 }
 
 const AuthenticatedOrdersRouteChildren: AuthenticatedOrdersRouteChildren = {
+  AuthenticatedOrdersIndexRoute: AuthenticatedOrdersIndexRoute,
   AuthenticatedOrdersOrderIdBiltyRoute: AuthenticatedOrdersOrderIdBiltyRoute,
 }
 

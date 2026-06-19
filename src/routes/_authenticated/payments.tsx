@@ -82,40 +82,56 @@ function PaymentsPage() {
               <SheetHeader><SheetTitle>Record Payment</SheetTitle></SheetHeader>
               <div className="grid gap-3 mt-4">
                 <div><Label>Direction</Label>
-                  <Select value={form.direction} onValueChange={v => setForm({ ...form, direction: v as never })}>
+                  <Select value={form.direction} onValueChange={v => setForm({ ...empty, direction: v as never, paid_at: form.paid_at })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="receivable">Received from client</SelectItem>
                       <SelectItem value="payable">Paid to transporter</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {form.direction === "receivable"
+                      ? "Money coming IN from a client against an invoice or order."
+                      : "Money going OUT to a transporter against an order."}
+                  </p>
                 </div>
-                <div><Label>Party</Label><PartyCombobox value={form.party_id} onChange={v => setForm({ ...form, party_id: v })} /></div>
-                <div><Label>Order (optional)</Label>
-                  <Select value={form.order_id} onValueChange={v => setForm({ ...form, order_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Link an order" /></SelectTrigger>
-                    <SelectContent>
-                      {orders.filter(o => !form.party_id || o.party_id === form.party_id).map(o => <SelectItem key={o.id} value={o.id}>{o.order_no}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <div>
+                  <Label>{form.direction === "receivable" ? "Client" : "Transporter"}</Label>
+                  <PartyCombobox value={form.party_id} onChange={v => setForm({ ...form, party_id: v, order_id: "", invoice_id: "" })} type={form.direction === "receivable" ? "client" : "transporter"} />
                 </div>
-                <div><Label>Invoice (optional)</Label>
-                  <Select value={form.invoice_id} onValueChange={v => setForm({ ...form, invoice_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Link an invoice" /></SelectTrigger>
-                    <SelectContent>
-                      {invoices.filter(i => !form.party_id || i.party_id === form.party_id).map(i => <SelectItem key={i.id} value={i.id}>{i.invoice_no}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label>Bank Account (for bank/UPI/cheque)</Label>
-                  <Select value={form.bank_account_id} onValueChange={v => setForm({ ...form, bank_account_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
-                    <SelectContent>
-                      {banks.length === 0 && <div className="p-2 text-xs text-muted-foreground">Add bank in Master Data</div>}
-                      {banks.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {form.party_id && (
+                  <div><Label>Order (optional)</Label>
+                    <Select value={form.order_id} onValueChange={v => setForm({ ...form, order_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Link an order" /></SelectTrigger>
+                      <SelectContent>
+                        {orders.filter(o => o.party_id === form.party_id).length === 0 && <div className="p-2 text-xs text-muted-foreground">No orders for this party</div>}
+                        {orders.filter(o => o.party_id === form.party_id).map(o => <SelectItem key={o.id} value={o.id}>{o.order_no}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {form.direction === "receivable" && form.party_id && (
+                  <div><Label>Invoice (optional)</Label>
+                    <Select value={form.invoice_id} onValueChange={v => setForm({ ...form, invoice_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Link an invoice" /></SelectTrigger>
+                      <SelectContent>
+                        {invoices.filter(i => i.party_id === form.party_id).length === 0 && <div className="p-2 text-xs text-muted-foreground">No invoices for this client</div>}
+                        {invoices.filter(i => i.party_id === form.party_id).map(i => <SelectItem key={i.id} value={i.id}>{i.invoice_no}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {(form.mode === "bank" || form.mode === "upi" || form.mode === "cheque") && (
+                  <div><Label>Bank Account</Label>
+                    <Select value={form.bank_account_id} onValueChange={v => setForm({ ...form, bank_account_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+                      <SelectContent>
+                        {banks.length === 0 && <div className="p-2 text-xs text-muted-foreground">Add bank in Master Data</div>}
+                        {banks.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Amount (₹)</Label><Input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} /></div>
                   <div><Label>Mode</Label>
